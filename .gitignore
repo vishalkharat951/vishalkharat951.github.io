@@ -20,6 +20,13 @@ logs/*.log.*
 # Environment
 .env
 
+# Media / Uploads
+media/profiles/
+media/uploads/
+
+# Backup files
+*.bak
+
 # IDE
 .idea/
 .vscode/
