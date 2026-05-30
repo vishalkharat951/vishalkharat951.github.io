@@ -1,4 +1,4 @@
-const API_BASE_URL = 'https://your-backend.com/api';
+const API_BASE_URL = 'https://zip-backend-myp0.onrender.com/api';
 
 (function routingGuard() {
   const token = localStorage.getItem('zipstore_token');
