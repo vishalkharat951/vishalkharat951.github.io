@@ -1,0 +1,58 @@
+const mongoose = require('mongoose');
+
+const orderItemSchema = new mongoose.Schema({
+  productId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Product',
+    required: true,
+  },
+  quantity: {
+    type: Number,
+    required: true,
+    min: 1,
+  },
+  price: {
+    type: Number,
+    required: true,
+    min: 0,
+  },
+}, { _id: false });
+
+const orderSchema = new mongoose.Schema({
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: [true, 'User ID is required'],
+  },
+  items: {
+    type: [orderItemSchema],
+    validate: {
+      validator: function (arr) { return arr.length > 0; },
+      message: 'Order must contain at least one item',
+    },
+  },
+  totalAmount: {
+    type: Number,
+    required: true,
+    min: 0,
+  },
+  shippingAddress: {
+    street: { type: String, required: true },
+    city: { type: String, required: true },
+    state: { type: String, required: true },
+    zip: { type: String, required: true },
+    country: { type: String, required: true },
+  },
+  paymentStatus: {
+    type: String,
+    enum: ['pending', 'paid'],
+    default: 'pending',
+  },
+  orderStatus: {
+    type: String,
+    enum: ['processing', 'shipped'],
+    default: 'processing',
+  },
+}, { timestamps: true });
+
+module.exports = mongoose.model('Order', orderSchema);
