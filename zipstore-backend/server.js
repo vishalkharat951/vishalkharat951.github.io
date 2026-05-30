@@ -62,16 +62,28 @@ app.use((err, req, res, next) => {
   });
 });
 
+const MONGODB_URI = process.env.MONGODB_URI;
+if (!MONGODB_URI) {
+  console.error('FATAL: MONGODB_URI environment variable is not set');
+  process.exit(1);
+}
+
 mongoose
-  .connect(process.env.MONGODB_URI)
+  .connect(MONGODB_URI, {
+    serverSelectionTimeoutMS: 15000,
+    socketTimeoutMS: 45000,
+  })
   .then(() => {
     console.log('Connected to MongoDB');
-    app.listen(PORT, () => {
+    app.listen(PORT, '0.0.0.0', () => {
       console.log(`ZipStore API running on port ${PORT}`);
     });
   })
   .catch((err) => {
-    console.error('MongoDB connection error:', err.message);
+    console.error('MongoDB connection error:', err.name, err.message);
+    if (err.name === 'MongooseServerSelectionError') {
+      console.error('Check that your MongoDB Atlas IP whitelist includes 0.0.0.0/0');
+    }
     process.exit(1);
   });
 
