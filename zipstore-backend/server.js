@@ -24,15 +24,11 @@ if (fs.existsSync(pluginsDir)) {
   }
 }
 
-const allowedOrigins = [
-  'https://your-github-username.github.io',
-  'http://localhost:3000',
-  'http://localhost:5173',
-];
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'https://vishalkharat951.github.io,http://localhost:3000,http://localhost:5173').split(',');
 
 app.use(cors({
   origin: function (origin, callback) {
-    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+    if (!origin || allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV === 'development') {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));

@@ -1,0 +1,5 @@
+{
+  "type": "dockerfile",
+  "dockerfilePath": "zipstore-backend/Dockerfile",
+  "baseDirectory": "zipstore-backend"
+}
