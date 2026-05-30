@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ZipStore — Product</title>
+  <link rel="stylesheet" href="css/global.css">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="container">
+      <a href="index.html" class="navbar-brand">ZipStore</a>
+      <ul class="navbar-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="shop.html">Shop</a></li>
+        <li><a href="cart.html" class="cart-badge">Cart <span class="cart-count">0</span></a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <div class="container" id="product-container">
+    <div class="loading" id="loading">
+      <div class="spinner"></div>
+      <p>Loading product...</p>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div class="container">
+      <p>&copy; 2026 ZipStore. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="js/cart.js"></script>
+  <script>
+    const container = document.getElementById('product-container');
+    const loading = document.getElementById('loading');
+    const params = new URLSearchParams(window.location.search);
+    const productId = params.get('id');
+
+    function showToast(msg, type) {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.className = 'toast ' + (type || '');
+      el.classList.add('show');
+      setTimeout(() => el.classList.remove('show'), 2500);
+    }
+
+    if (!productId) {
+      loading.style.display = 'none';
+      container.innerHTML = '<p class="error-message">No product ID specified. <a href="shop.html">Browse shop</a>.</p>';
+    } else {
+      fetch(`${API_BASE_URL}/products/${productId}`)
+        .then(r => {
+          if (!r.ok) throw new Error('Product not found');
+          return r.json();
+        })
+        .then(p => {
+          loading.style.display = 'none';
+
+          let videoHtml = '';
+          if (p.videoUrl) {
+            const isEmbed = p.videoUrl.includes('youtube.com/embed') || p.videoUrl.includes('youtu.be');
+            const isVideoTag = !isEmbed;
+            videoHtml = `
+              <div class="video-wrapper">
+                ${isEmbed
+                  ? `<iframe src="${p.videoUrl}" allowfullscreen></iframe>`
+                  : `<video src="${p.videoUrl}" controls></video>`
+                }
+              </div>
+            `;
+          }
+
+          const inStock = p.stock > 0;
+
+          container.innerHTML = `
+            <div class="product-detail">
+              <div>
+                <img src="${p.imageUrl || 'https://placehold.co/600x600?text=No+Image'}" alt="${p.title}" class="product-detail-image">
+                ${videoHtml}
+              </div>
+              <div class="product-detail-info">
+                <span class="product-detail-category">${p.category?.name || 'General'}</span>
+                <h1>${p.title}</h1>
+                <p class="product-detail-price">$${Number(p.price).toFixed(2)}</p>
+                <p class="product-detail-description">${p.description || 'No description available.'}</p>
+                <p class="product-detail-stock ${inStock ? 'in-stock' : 'out-of-stock'}">
+                  ${inStock ? `In Stock (${p.stock} available)` : 'Out of Stock'}
+                </p>
+                <div class="quantity-selector">
+                  <button id="qty-minus">&minus;</button>
+                  <span id="qty-display">1</span>
+                  <button id="qty-plus">+</button>
+                </div>
+                <button class="btn btn-secondary btn-block" id="add-to-cart-btn" ${!inStock ? 'disabled style="opacity:0.5;cursor:not-allowed"' : ''}>
+                  ${inStock ? 'Add to Cart' : 'Unavailable'}
+                </button>
+              </div>
+            </div>
+          `;
+
+          let qty = 1;
+          const qtyDisplay = document.getElementById('qty-display');
+
+          document.getElementById('qty-minus').addEventListener('click', () => {
+            if (qty > 1) { qty--; qtyDisplay.textContent = qty; }
+          });
+
+          document.getElementById('qty-plus').addEventListener('click', () => {
+            if (qty < p.stock) { qty++; qtyDisplay.textContent = qty; }
+          });
+
+          document.getElementById('add-to-cart-btn').addEventListener('click', () => {
+            Cart.add(p, qty);
+            showToast(`${p.title} (x${qty}) added to cart!`, 'success');
+          });
+        })
+        .catch(() => {
+          loading.style.display = 'none';
+          container.innerHTML = '<p class="error-message">Product not found. <a href="shop.html">Browse shop</a>.</p>';
+        });
+    }
+  </script>
+</body>
+</html>

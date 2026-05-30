@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ZipStore — Home</title>
+  <link rel="stylesheet" href="css/global.css">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="container">
+      <a href="index.html" class="navbar-brand">ZipStore</a>
+      <ul class="navbar-links">
+        <li><a href="index.html" class="active">Home</a></li>
+        <li><a href="shop.html">Shop</a></li>
+        <li><a href="cart.html" class="cart-badge">Cart <span class="cart-count">0</span></a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <section class="hero">
+    <div class="container">
+      <h1>Welcome to ZipStore</h1>
+      <p>Discover the latest products curated just for you. Fast shipping, great prices, and quality you can trust.</p>
+      <a href="shop.html" class="btn btn-outline">Shop Now</a>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <h2 class="section-title">Featured Products</h2>
+      <div class="product-grid" id="featured-grid"></div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="container">
+      <p>&copy; 2026 ZipStore. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="js/cart.js"></script>
+  <script>
+    const featuredGrid = document.getElementById('featured-grid');
+
+    fetch(`${API_BASE_URL}/products`)
+      .then(r => r.json())
+      .then(data => {
+        const products = data.products || data;
+        const featured = products.slice(0, 8);
+
+        featuredGrid.innerHTML = featured.map(p => `
+          <div class="product-card">
+            <img src="${p.imageUrl || 'https://placehold.co/400x400?text=No+Image'}" alt="${p.title}" class="product-card-image" loading="lazy">
+            <div class="product-card-body">
+              <span class="product-card-category">${p.category?.name || 'General'}</span>
+              <h3 class="product-card-title">${p.title}</h3>
+              <p class="product-card-price">$${Number(p.price).toFixed(2)}</p>
+              <div class="product-card-footer">
+                <a href="product.html?id=${p._id}" class="btn btn-secondary btn-sm">View</a>
+                <button class="btn btn-outline btn-sm" onclick="Cart.add(${JSON.stringify(p).replace(/"/g, '&quot;')})">Add to Cart</button>
+              </div>
+            </div>
+          </div>
+        `).join('');
+      })
+      .catch(() => {
+        featuredGrid.innerHTML = '<p class="error-message">Failed to load products. Make sure the API is running.</p>';
+      });
+  </script>
+</body>
+</html>

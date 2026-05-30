@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ZipStore — Checkout</title>
+  <link rel="stylesheet" href="css/global.css">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="container">
+      <a href="index.html" class="navbar-brand">ZipStore</a>
+      <ul class="navbar-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="shop.html">Shop</a></li>
+        <li><a href="cart.html" class="cart-badge">Cart <span class="cart-count">0</span></a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div id="checkout-view">
+      <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <p>Loading checkout...</p>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div class="container">
+      <p>&copy; 2026 ZipStore. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="js/cart.js"></script>
+  <script>
+    const checkoutView = document.getElementById('checkout-view');
+    const loading = document.getElementById('loading');
+
+    function showToast(msg, type) {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.className = 'toast ' + (type || '');
+      el.classList.add('show');
+      setTimeout(() => el.classList.remove('show'), 2500);
+    }
+
+    function renderCheckout() {
+      const items = Cart.get();
+      const total = Cart.getTotal();
+
+      if (items.length === 0) {
+        loading.style.display = 'none';
+        checkoutView.innerHTML = `
+          <div class="cart-empty">
+            <h2>Your cart is empty</h2>
+            <p>Add some items before checking out.</p>
+            <a href="shop.html" class="btn btn-secondary">Continue Shopping</a>
+          </div>
+        `;
+        return;
+      }
+
+      loading.style.display = 'none';
+
+      checkoutView.innerHTML = `
+        <form class="checkout-form" id="checkout-form">
+          <h2 class="section-title" style="text-align:left">Shipping Information</h2>
+
+          <div class="form-group">
+            <label for="street">Street Address</label>
+            <input type="text" id="street" required placeholder="123 Main St">
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="city">City</label>
+              <input type="text" id="city" required placeholder="New York">
+            </div>
+            <div class="form-group">
+              <label for="state">State</label>
+              <input type="text" id="state" required placeholder="NY">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="zip">ZIP Code</label>
+              <input type="text" id="zip" required placeholder="10001">
+            </div>
+            <div class="form-group">
+              <label for="country">Country</label>
+              <input type="text" id="country" required placeholder="United States">
+            </div>
+          </div>
+
+          <div class="cart-summary" style="position:static;margin-bottom:var(--space-6)">
+            <h2>Order Summary</h2>
+            ${items.map(item => `
+              <div class="summary-row">
+                <span>${item.title} x${item.quantity}</span>
+                <span>$${(item.price * item.quantity).toFixed(2)}</span>
+              </div>
+            `).join('')}
+            <div class="summary-row total">
+              <span>Total</span>
+              <span>$${total.toFixed(2)}</span>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-secondary btn-block">Place Order — $${total.toFixed(2)}</button>
+        </form>
+      `;
+
+      document.getElementById('checkout-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const shippingAddress = {
+          street: document.getElementById('street').value,
+          city: document.getElementById('city').value,
+          state: document.getElementById('state').value,
+          zip: document.getElementById('zip').value,
+          country: document.getElementById('country').value,
+        };
+
+        const token = localStorage.getItem('zipstore_token');
+        if (!token) {
+          showToast('Please log in to place an order.', 'error');
+          return;
+        }
+
+        const orderBody = {
+          items: items.map(i => ({ productId: i.productId, quantity: i.quantity })),
+          shippingAddress,
+        };
+
+        try {
+          const orderRes = await fetch(`${API_BASE_URL}/orders`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify(orderBody),
+          });
+
+          if (!orderRes.ok) {
+            const err = await orderRes.json();
+            throw new Error(err.error || 'Failed to create order');
+          }
+
+          const order = await orderRes.json();
+
+          const payRes = await fetch(`${API_BASE_URL}/payments/checkout-mock`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ orderId: order.order._id || order.order.id }),
+          });
+
+          if (!payRes.ok) {
+            throw new Error('Payment failed');
+          }
+
+          const payment = await payRes.json();
+
+          Cart.clear();
+
+          checkoutView.innerHTML = `
+            <div class="cart-empty">
+              <h2>Order Confirmed!</h2>
+              <p>Your order (ID: ${order.order._id || order.order.id}) has been placed successfully.</p>
+              <p>Payment status: <strong>${payment.order.paymentStatus}</strong></p>
+              <p style="margin-top:var(--space-4);font-size:var(--font-size-sm);color:var(--color-text-secondary)">Mock Token: ${payment.mockToken}</p>
+              <a href="shop.html" class="btn btn-secondary" style="margin-top:var(--space-6)">Continue Shopping</a>
+            </div>
+          `;
+        } catch (err) {
+          showToast(err.message || 'Checkout failed. Please try again.', 'error');
+        }
+      });
+    }
+
+    renderCheckout();
+  </script>
+</body>
+</html>
