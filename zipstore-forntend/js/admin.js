@@ -351,8 +351,64 @@ async function loadInventory() {
 /* ===== Order Management ===== */
 const ordersTbody = document.getElementById('orders-tbody');
 const ordersEmpty = document.getElementById('orders-empty');
+const orderModal = document.getElementById('orderModal');
+const modalBody = document.getElementById('modalBody');
 
 const ORDER_STATUSES = ['pending', 'confirmed', 'packed', 'shipped', 'delivered', 'cancelled'];
+
+function openOrderModal(order) {
+  const itemsHtml = order.items.map(i => {
+    const name = i.productId?.title || 'Unknown Product';
+    return `<tr><td>${name}</td><td>${i.quantity}</td><td>$${Number(i.price).toFixed(2)}</td><td>$${(i.price * i.quantity).toFixed(2)}</td></tr>`;
+  }).join('');
+
+  modalBody.innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4);margin-bottom:var(--space-4)">
+      <div><strong>Order ID</strong><br><code style="font-size:var(--font-size-sm)">${order._id}</code></div>
+      <div><strong>Order Date</strong><br>${new Date(order.createdAt).toLocaleString()}</div>
+      <div><strong>Customer</strong><br>${order.userId?.name || '—'}</div>
+      <div><strong>Email</strong><br>${order.userId?.email || '—'}</div>
+      <div><strong>Payment</strong><br><span class="status-badge status-${order.paymentStatus}">${order.paymentStatus}</span> / ${order.paymentMethod || 'mock'}</div>
+      <div><strong>Transaction ID</strong><br>${order.transactionId || '—'}</div>
+      <div><strong>Order Status</strong><br><span class="status-badge status-${order.orderStatus}">${order.orderStatus}</span></div>
+      <div><strong>Total Amount</strong><br><strong>$${Number(order.totalAmount).toFixed(2)}</strong></div>
+    </div>
+    <div style="margin-bottom:var(--space-4)">
+      <strong>Shipping Address</strong><br>
+      ${order.shippingAddress?.street || ''}, ${order.shippingAddress?.city || ''}, ${order.shippingAddress?.state || ''} ${order.shippingAddress?.zip || ''}, ${order.shippingAddress?.country || ''}
+    </div>
+    <div>
+      <strong>Ordered Products</strong>
+      <div class="admin-table-wrapper" style="margin-top:var(--space-2)">
+        <table class="admin-table">
+          <thead><tr><th>Product</th><th>Qty</th><th>Unit Price</th><th>Subtotal</th></tr></thead>
+          <tbody>${itemsHtml}</tbody>
+        </table>
+      </div>
+    </div>
+  `;
+  orderModal.style.display = 'flex';
+}
+
+function closeOrderModal() {
+  orderModal.style.display = 'none';
+}
+
+document.getElementById('modalClose').addEventListener('click', closeOrderModal);
+orderModal.addEventListener('click', (e) => {
+  if (e.target === orderModal) closeOrderModal();
+});
+
+async function deleteOrder(orderId) {
+  if (!confirm('Delete this order permanently?')) return;
+  try {
+    await api(`/admin/orders/${orderId}`, { method: 'DELETE' });
+    showToast('Order deleted', 'success');
+    loadOrders();
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+}
 
 async function loadOrders() {
   try {
@@ -367,18 +423,22 @@ async function loadOrders() {
 
     ordersEmpty.style.display = 'none';
     ordersTbody.innerHTML = orders.map(o => {
-      const itemCount = o.items.reduce((s, i) => s + i.quantity, 0);
       const date = new Date(o.createdAt).toLocaleDateString();
       const statusOptions = ORDER_STATUSES.map(s =>
         `<option value="${s}"${s === o.orderStatus ? ' selected' : ''}>${s.charAt(0).toUpperCase() + s.slice(1)}</option>`
       ).join('');
+      const itemsList = o.items.map(i =>
+        `${i.productId?.title || 'Unknown'} x${i.quantity}`
+      ).join('<br>');
+      const addr = `${o.shippingAddress?.street || ''}, ${o.shippingAddress?.city || ''}`;
       return `<tr>
         <td><code>${o._id.slice(-8)}</code></td>
         <td>
           <strong>${o.userId?.name || '—'}</strong><br>
           <span style="font-size:var(--font-size-xs);color:var(--color-text-secondary)">${o.userId?.email || ''}</span>
         </td>
-        <td>${itemCount} item${itemCount !== 1 ? 's' : ''}</td>
+        <td style="font-size:var(--font-size-xs)">${itemsList}</td>
+        <td style="font-size:var(--font-size-xs)">${addr}</td>
         <td><strong>$${Number(o.totalAmount).toFixed(2)}</strong></td>
         <td>
           <span class="status-badge status-${o.paymentStatus}">${o.paymentStatus}</span>
@@ -389,15 +449,28 @@ async function loadOrders() {
         </td>
         <td style="font-size:var(--font-size-xs);color:var(--color-text-secondary)">${date}</td>
         <td>
-          <div class="actions">
-            <select class="order-status-select" data-order-id="${o._id}" style="font-size:var(--font-size-xs);padding:var(--space-1) var(--space-2);border:1px solid var(--color-border);border-radius:var(--radius-sm);background:var(--color-white)">
+          <div class="actions" style="flex-wrap:nowrap">
+            <select class="order-status-select" data-order-id="${o._id}" style="font-size:var(--font-size-xs);padding:var(--space-1) var(--space-2);border:1px solid var(--color-border);border-radius:var(--radius-sm);background:var(--color-white);max-width:90px">
               ${statusOptions}
             </select>
-            <button class="btn btn-secondary btn-sm" data-view-order="${o._id}" onclick="alert('Customer: ${(o.userId?.name || 'N/A').replace(/'/g, '\\\'')}\nAddress: ${o.shippingAddress?.street || ''}, ${o.shippingAddress?.city || ''}\nPayment: ${o.paymentMethod || 'mock'} / ${o.paymentStatus}\nTransaction: ${o.transactionId || '—'}\nTotal: $${Number(o.totalAmount).toFixed(2)}')">View</button>
+            <button class="btn btn-secondary btn-sm" data-view-order='${o._id}'>View</button>
+            <button class="btn btn-danger btn-sm" data-delete-order="${o._id}">Delete</button>
           </div>
         </td>
       </tr>`;
     }).join('');
+
+    document.querySelectorAll('[data-view-order]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.viewOrder;
+        const order = orders.find(o => o._id === id);
+        if (order) openOrderModal(order);
+      });
+    });
+
+    document.querySelectorAll('[data-delete-order]').forEach(btn => {
+      btn.addEventListener('click', () => deleteOrder(btn.dataset.deleteOrder));
+    });
 
     document.querySelectorAll('.order-status-select').forEach(sel => {
       sel.addEventListener('change', async () => {

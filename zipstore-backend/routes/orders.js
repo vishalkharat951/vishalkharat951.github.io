@@ -12,5 +12,6 @@ router.post('/payments/phonepe-callback', paymentController.phonePeCallback);
 router.get('/payments/phonepe-status/:transactionId', authenticate, paymentController.verifyPhonePeStatus);
 router.get('/admin/orders', authenticate, orderController.getAdminOrders);
 router.patch('/admin/orders/:id', authenticate, orderController.updateOrderStatus);
+router.delete('/admin/orders/:id', authenticate, orderController.deleteOrder);
 
 module.exports = router;
