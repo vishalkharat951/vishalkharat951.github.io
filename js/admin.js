@@ -20,91 +20,74 @@ function showToast(msg, type) {
   setTimeout(() => el.classList.remove('show'), 2500);
 }
 
-function api(path, options = {}) {
+async function api(path, options = {}) {
   const token = getToken();
-  return fetch(`${API_BASE_URL}${path}`, {
+  const res = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...options.headers,
     },
-  }).then(async (res) => {
-    if (res.status === 401) {
-      localStorage.removeItem('zipstore_token');
-      localStorage.removeItem('zipstore_user');
-      window.location.href = 'login.html';
-      throw new Error('Session expired');
-    }
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Request failed');
-    return data;
   });
+  if (res.status === 401) {
+    localStorage.removeItem('zipstore_token');
+    localStorage.removeItem('zipstore_user');
+    window.location.href = 'login.html';
+    throw new Error('Session expired');
+  }
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Request failed');
+  return data;
 }
 
-/* ===== Sidebar Toggle ===== */
+/* ===== Sidebar ===== */
 const sidebar = document.getElementById('adminSidebar');
 const sidebarToggle = document.getElementById('sidebarToggle');
-const SIDEBAR_STORAGE_KEY = 'zipstore_sidebar_collapsed';
-
-function setSidebarState(collapsed) {
-  sidebar.classList.toggle('collapsed', collapsed);
-  localStorage.setItem(SIDEBAR_STORAGE_KEY, collapsed ? '1' : '0');
-}
+const STORAGE_KEY = 'zipstore_sidebar_collapsed';
 
 sidebarToggle.addEventListener('click', () => {
-  setSidebarState(!sidebar.classList.contains('collapsed'));
+  const collapsed = !sidebar.classList.contains('collapsed');
+  sidebar.classList.toggle('collapsed', collapsed);
+  localStorage.setItem(STORAGE_KEY, collapsed ? '1' : '0');
 });
 
-if (localStorage.getItem(SIDEBAR_STORAGE_KEY) === '1') {
+if (localStorage.getItem(STORAGE_KEY) === '1') {
   sidebar.classList.add('collapsed');
 }
 
 /* ===== Navigation ===== */
-const navLinks = document.querySelectorAll('.admin-sidebar-nav a');
 const sections = {
   dashboard: document.getElementById('section-dashboard'),
   products: document.getElementById('section-products'),
-  categories: document.getElementById('section-categories'),
   inventory: document.getElementById('section-inventory'),
   plugins: document.getElementById('section-plugins'),
 };
 
-function showSection(name) {
-  Object.entries(sections).forEach(([key, el]) => {
-    el.style.display = key === name ? 'block' : 'none';
-  });
-  navLinks.forEach(link => {
-    link.classList.toggle('active', link.dataset.section === name);
-  });
-}
-
-navLinks.forEach(link => {
+document.querySelectorAll('.admin-sidebar-nav a').forEach(link => {
   link.addEventListener('click', (e) => {
     e.preventDefault();
-    showSection(link.dataset.section);
-    if (link.dataset.section === 'dashboard') loadDashboard();
-    if (link.dataset.section === 'categories') loadCategories();
-    if (link.dataset.section === 'inventory') loadInventory();
+    const name = link.dataset.section;
+    Object.entries(sections).forEach(([key, el]) => {
+      el.style.display = key === name ? 'block' : 'none';
+    });
+    document.querySelectorAll('.admin-sidebar-nav a').forEach(l => l.classList.toggle('active', l.dataset.section === name));
+    if (name === 'dashboard') loadDashboard();
+    if (name === 'inventory') loadInventory();
+    if (name === 'products') loadCatSuggestions();
   });
 });
 
 /* ===== Dashboard ===== */
 async function loadDashboard() {
   try {
-    const [productsData, ordersData] = await Promise.all([
+    const [pData, oData] = await Promise.all([
       api('/products'),
       api('/admin/orders'),
     ]);
-
-    const products = productsData.products || productsData;
-    const orders = ordersData.orders || ordersData;
-
-    const totalRevenue = orders
-      .filter(o => o.paymentStatus === 'paid')
-      .reduce((sum, o) => sum + (o.totalAmount || 0), 0);
-
-    document.getElementById('stat-revenue').textContent = `$${totalRevenue.toFixed(2)}`;
+    const products = pData.products || pData;
+    const orders = oData.orders || oData;
+    document.getElementById('stat-revenue').textContent = `$${orders.filter(o => o.paymentStatus === 'paid').reduce((s, o) => s + (o.totalAmount || 0), 0).toFixed(2)}`;
     document.getElementById('stat-orders').textContent = orders.length;
     document.getElementById('stat-products').textContent = products.length;
   } catch (err) {
@@ -112,310 +95,129 @@ async function loadDashboard() {
   }
 }
 
-/* ===== Multi-Image Input ===== */
+/* ===== Images ===== */
 const imageList = document.getElementById('image-list');
-const addImageBtn = document.getElementById('add-image-btn');
-
-function getImageRows() {
-  return imageList.querySelectorAll('.image-input-row');
-}
-
-function getImageUrls() {
-  const urls = [];
-  getImageRows().forEach(row => {
-    const val = row.querySelector('.p-image').value.trim();
-    if (val) urls.push(val);
-  });
-  return urls;
-}
 
 function addImageRow(url) {
   const row = document.createElement('div');
   row.className = 'image-input-row';
-  row.innerHTML = `
-    <input type="url" class="p-image" placeholder="https://example.com/image.jpg" value="${url || ''}">
-    <button type="button" class="btn btn-danger btn-sm btn-remove-image">&times;</button>
-  `;
-  row.querySelector('.btn-remove-image').addEventListener('click', () => {
-    row.remove();
-    toggleRemoveButtons();
-  });
+  row.innerHTML = `<input type="url" class="p-image" placeholder="https://example.com/image.jpg" value="${url || ''}"><button type="button" class="btn btn-danger btn-sm btn-remove-image">&times;</button>`;
+  row.querySelector('.btn-remove-image').addEventListener('click', () => { row.remove(); toggleRemoveBtns(); });
   imageList.appendChild(row);
-  toggleRemoveButtons();
+  toggleRemoveBtns();
 }
 
-function toggleRemoveButtons() {
-  const rows = getImageRows();
-  rows.forEach((row, i) => {
-    row.querySelector('.btn-remove-image').style.display = rows.length > 1 ? '' : 'none';
-  });
+function toggleRemoveBtns() {
+  const rows = imageList.querySelectorAll('.image-input-row');
+  rows.forEach((r, i) => { r.querySelector('.btn-remove-image').style.display = rows.length > 1 ? '' : 'none'; });
 }
 
-addImageBtn.addEventListener('click', () => addImageRow(''));
+document.getElementById('add-image-btn').addEventListener('click', () => addImageRow(''));
+toggleRemoveBtns();
 
-toggleRemoveButtons();
+function getImageUrls() {
+  const urls = [];
+  imageList.querySelectorAll('.p-image').forEach(inp => { const v = inp.value.trim(); if (v) urls.push(v); });
+  return urls;
+}
 
-/* ===== Products Form ===== */
+/* ===== Category Cache ===== */
+let categoryCache = [];
+
+async function loadCatSuggestions() {
+  try {
+    const data = await api('/products');
+    const products = data.products || data;
+    const map = {};
+    products.forEach(p => {
+      if (p.category && p.category._id) map[p.category._id] = p.category.name;
+    });
+    categoryCache = Object.entries(map).map(([id, name]) => ({ _id: id, name }));
+    const dl = document.getElementById('cat-suggestions');
+    dl.innerHTML = categoryCache.map(c => `<option value="${c.name}">`).join('');
+  } catch (_) {}
+}
+
+async function resolveCategory(input) {
+  if (!input) return null;
+  const existing = categoryCache.find(c => c.name.toLowerCase() === input.toLowerCase());
+  if (existing) return existing._id;
+  const slug = input.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'category';
+  try {
+    const result = await api('/categories', {
+      method: 'POST',
+      body: JSON.stringify({ name: input, slug }),
+    });
+    const cat = result.category;
+    categoryCache.push({ _id: cat._id, name: cat.name });
+    const dl = document.getElementById('cat-suggestions');
+    dl.innerHTML = categoryCache.map(c => `<option value="${c.name}">`).join('');
+    return cat._id;
+  } catch (err) {
+    showToast('Failed to create category: ' + err.message, 'error');
+    return null;
+  }
+}
+
+/* ===== Product Form ===== */
 const productForm = document.getElementById('product-form');
 const formTitle = document.getElementById('form-title');
 const formSubmitBtn = document.getElementById('form-submit-btn');
 const formCancelBtn = document.getElementById('form-cancel-btn');
-const pCategory = document.getElementById('p-category');
 let editingProductId = null;
 
 function resetForm() {
   productForm.reset();
   editingProductId = null;
-  formTitle.textContent = 'Add New Product';
-  formSubmitBtn.textContent = 'Create Product';
+  formTitle.textContent = 'New Product';
+  formSubmitBtn.textContent = 'Save Product';
   formCancelBtn.style.display = 'none';
   imageList.innerHTML = '';
   addImageRow('');
-  toggleRemoveButtons();
+  toggleRemoveBtns();
 }
 
 formCancelBtn.addEventListener('click', resetForm);
 
-async function loadCategoryOptions(selectedId) {
-  try {
-    const data = await api('/categories');
-    const cats = data.categories || [];
-    pCategory.innerHTML = '<option value="">Select category...</option>';
-    function addOptions(list, depth) {
-      list.forEach(cat => {
-        const opt = document.createElement('option');
-        opt.value = cat._id;
-        opt.textContent = '  '.repeat(depth) + cat.name;
-        if (selectedId && cat._id === selectedId) opt.selected = true;
-        pCategory.appendChild(opt);
-      });
-    }
-    const topLevel = cats.filter(c => !c.parent);
-    topLevel.sort((a, b) => a.name.localeCompare(b.name));
-    topLevel.forEach(parent => {
-      addOptions([parent], 0);
-      const children = cats.filter(c => c.parent && c.parent._id === parent._id);
-      children.sort((a, b) => a.name.localeCompare(b.name));
-      addOptions(children, 1);
-    });
-  } catch (err) {
-    showToast('Failed to load categories: ' + err.message, 'error');
-  }
-}
-
 productForm.addEventListener('submit', async (e) => {
   e.preventDefault();
-
-  const images = getImageUrls();
-  const category = pCategory.value;
-
-  if (!category) {
-    showToast('Please select a category', 'error');
-    return;
-  }
-
-  const body = {
-    title: document.getElementById('p-title').value,
-    description: document.getElementById('p-desc').value,
-    price: parseFloat(document.getElementById('p-price').value),
-    category,
-    stock: parseInt(document.getElementById('p-stock').value, 10),
-    images,
-    videoUrl: document.getElementById('p-video').value || '',
-  };
+  formSubmitBtn.disabled = true;
+  formSubmitBtn.textContent = 'Saving...';
 
   try {
+    const catInput = document.getElementById('p-category').value.trim();
+    const categoryId = await resolveCategory(catInput);
+    if (!categoryId) { throw new Error('Please enter a category'); }
+
+    const body = {
+      title: document.getElementById('p-title').value,
+      description: document.getElementById('p-desc').value,
+      price: parseFloat(document.getElementById('p-price').value),
+      category: categoryId,
+      stock: parseInt(document.getElementById('p-stock').value, 10) || 0,
+      images: getImageUrls(),
+      videoUrl: document.getElementById('p-video').value || '',
+    };
+
     if (editingProductId) {
-      await api(`/products/${editingProductId}`, {
-        method: 'PUT',
-        body: JSON.stringify(body),
-      });
-      showToast('Product updated successfully', 'success');
+      await api(`/products/${editingProductId}`, { method: 'PUT', body: JSON.stringify(body) });
+      showToast('Product updated!', 'success');
     } else {
-      await api('/products', {
-        method: 'POST',
-        body: JSON.stringify(body),
-      });
-      showToast('Product created successfully', 'success');
+      await api('/products', { method: 'POST', body: JSON.stringify(body) });
+      showToast('Product created!', 'success');
     }
 
     resetForm();
     loadInventory();
   } catch (err) {
     showToast(err.message, 'error');
+  } finally {
+    formSubmitBtn.disabled = false;
+    formSubmitBtn.textContent = editingProductId ? 'Update Product' : 'Save Product';
   }
 });
 
-/* ===== Categories Management ===== */
-const catForm = document.getElementById('category-form');
-const catFormTitle = document.getElementById('cat-form-title');
-const catSubmitBtn = document.getElementById('cat-submit-btn');
-const catCancelBtn = document.getElementById('cat-cancel-btn');
-const cParent = document.getElementById('c-parent');
-let editingCategoryId = null;
-
-function resetCatForm() {
-  catForm.reset();
-  editingCategoryId = null;
-  catFormTitle.textContent = 'Add New Category';
-  catSubmitBtn.textContent = 'Create Category';
-  catCancelBtn.style.display = 'none';
-  cParent.value = '';
-}
-
-catCancelBtn.addEventListener('click', resetCatForm);
-
-async function loadCategoryParentOptions(selectedId, excludeId) {
-  try {
-    const data = await api('/categories');
-    const cats = data.categories || [];
-    cParent.innerHTML = '<option value="">None (top-level)</option>';
-    cats
-      .filter(c => !c.parent && (!excludeId || c._id !== excludeId))
-      .sort((a, b) => a.name.localeCompare(b.name))
-      .forEach(parent => {
-        const opt = document.createElement('option');
-        opt.value = parent._id;
-        opt.textContent = parent.name;
-        if (selectedId && parent._id === selectedId) opt.selected = true;
-        cParent.appendChild(opt);
-      });
-  } catch (err) {
-    showToast('Failed to load parent categories: ' + err.message, 'error');
-  }
-}
-
-catForm.addEventListener('submit', async (e) => {
-  e.preventDefault();
-
-  const body = {
-    name: document.getElementById('c-name').value,
-    slug: document.getElementById('c-slug').value,
-    parent: document.getElementById('c-parent').value || null,
-    image: document.getElementById('c-image').value || '',
-  };
-
-  try {
-    if (editingCategoryId) {
-      await api(`/categories/${editingCategoryId}`, {
-        method: 'PUT',
-        body: JSON.stringify(body),
-      });
-      showToast('Category updated successfully', 'success');
-    } else {
-      await api('/categories', {
-        method: 'POST',
-        body: JSON.stringify(body),
-      });
-      showToast('Category created successfully', 'success');
-    }
-
-    resetCatForm();
-    loadCategories();
-  } catch (err) {
-    showToast(err.message, 'error');
-  }
-});
-
-function renderCategoryTree(categories) {
-  const container = document.getElementById('category-list');
-  const empty = document.getElementById('category-empty');
-
-  const topLevel = categories.filter(c => !c.parent);
-  if (topLevel.length === 0) {
-    container.innerHTML = '';
-    empty.style.display = 'block';
-    return;
-  }
-
-  empty.style.display = 'none';
-  container.innerHTML = '<div class="cat-tree"></div>';
-  const tree = container.querySelector('.cat-tree');
-
-  topLevel.sort((a, b) => a.name.localeCompare(b.name)).forEach(parent => {
-    const children = categories.filter(c => c.parent && (c.parent._id === parent._id || c.parent === parent._id));
-    children.sort((a, b) => a.name.localeCompare(b.name));
-
-    const card = document.createElement('div');
-    card.className = 'cat-card';
-    card.innerHTML = `
-      <div class="cat-card-header">
-        ${parent.image ? `<img src="${parent.image}" class="cat-card-img">` : '<div class="cat-card-img-placeholder"></div>'}
-        <div class="cat-card-info">
-          <strong>${parent.name}</strong>
-          <span class="cat-card-slug">/${parent.slug}</span>
-        </div>
-        <div class="cat-card-actions">
-          <button class="btn btn-secondary btn-sm cat-edit" data-id="${parent._id}">Edit</button>
-          <button class="btn btn-danger btn-sm cat-delete" data-id="${parent._id}">Delete</button>
-        </div>
-      </div>
-      ${children.length ? `
-        <div class="cat-sub-list">
-          ${children.map(child => `
-            <div class="cat-sub-item">
-              ${child.image ? `<img src="${child.image}" class="cat-sub-img">` : '<div class="cat-sub-img-placeholder"></div>'}
-              <span>${child.name} <span class="cat-card-slug">/${child.slug}</span></span>
-              <div class="cat-card-actions">
-                <button class="btn btn-secondary btn-sm cat-edit" data-id="${child._id}">Edit</button>
-                <button class="btn btn-danger btn-sm cat-delete" data-id="${child._id}">Delete</button>
-              </div>
-            </div>
-          `).join('')}
-        </div>
-      ` : ''}
-    `;
-    tree.appendChild(card);
-  });
-
-  container.querySelectorAll('.cat-edit').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const cat = categories.find(c => c._id === btn.dataset.id);
-      if (cat) populateCatForm(cat, categories);
-    });
-  });
-
-  container.querySelectorAll('.cat-delete').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      if (!confirm('Delete this category permanently?')) return;
-      try {
-        await api(`/categories/${btn.dataset.id}`, { method: 'DELETE' });
-        showToast('Category deleted', 'success');
-        loadCategories();
-      } catch (err) {
-        showToast(err.message, 'error');
-      }
-    });
-  });
-}
-
-function populateCatForm(cat, allCats) {
-  editingCategoryId = cat._id;
-  catFormTitle.textContent = 'Edit Category';
-  catSubmitBtn.textContent = 'Update Category';
-  catCancelBtn.style.display = 'inline-flex';
-
-  document.getElementById('c-name').value = cat.name || '';
-  document.getElementById('c-slug').value = cat.slug || '';
-  document.getElementById('c-image').value = cat.image || '';
-
-  const parentId = cat.parent && (cat.parent._id || cat.parent);
-  loadCategoryParentOptions(parentId, cat._id);
-}
-
-async function loadCategories() {
-  try {
-    const data = await api('/categories');
-    const cats = data.categories || [];
-    renderCategoryTree(cats);
-    loadCategoryParentOptions();
-    loadCategoryOptions();
-  } catch (err) {
-    showToast(err.message, 'error');
-  }
-}
-
-/* ===== Inventory Table ===== */
+/* ===== Inventory ===== */
 const tbody = document.getElementById('inventory-tbody');
 const emptyRow = document.getElementById('inventory-empty');
 
@@ -424,21 +226,19 @@ async function loadInventory() {
     const data = await api('/products');
     const products = data.products || data;
 
-    if (products.length === 0) {
+    if (!products.length) {
       tbody.innerHTML = '';
       emptyRow.style.display = 'block';
       return;
     }
 
     emptyRow.style.display = 'none';
-
     tbody.innerHTML = products.map(p => {
       const safe = JSON.stringify(p).replace(/'/g, '&#39;').replace(/"/g, '&quot;');
-      return `
-      <tr>
+      return `<tr>
         <td><strong>${p.title}</strong></td>
         <td>$${Number(p.price).toFixed(2)}</td>
-        <td>${p.category?.name || p.category || '—'}</td>
+        <td>${p.category?.name || '—'}</td>
         <td>${p.stock}</td>
         <td>
           <div class="actions">
@@ -446,22 +246,37 @@ async function loadInventory() {
             <button class="btn btn-danger btn-sm" data-delete="${p._id}">Delete</button>
           </div>
         </td>
-      </tr>
-    `}).join('');
+      </tr>`;
+    }).join('');
 
     tbody.querySelectorAll('[data-edit]').forEach(btn => {
       btn.addEventListener('click', () => {
-        const product = JSON.parse(btn.dataset.edit);
-        populateForm(product);
+        const p = JSON.parse(btn.dataset.edit);
+        editingProductId = p._id;
+        formTitle.textContent = 'Edit Product';
+        formSubmitBtn.textContent = 'Update Product';
+        formCancelBtn.style.display = 'inline-flex';
+        document.getElementById('p-title').value = p.title || '';
+        document.getElementById('p-desc').value = p.description || '';
+        document.getElementById('p-price').value = p.price || '';
+        document.getElementById('p-category').value = p.category?.name || '';
+        document.getElementById('p-stock').value = p.stock ?? 10;
+        document.getElementById('p-video').value = p.videoUrl || '';
+        imageList.innerHTML = '';
+        const imgs = p.images && p.images.length ? p.images : [p.imageUrl || ''];
+        imgs.forEach(url => addImageRow(url));
+        toggleRemoveBtns();
+        showSection('products');
+        document.getElementById('p-title').focus();
       });
     });
 
     tbody.querySelectorAll('[data-delete]').forEach(btn => {
       btn.addEventListener('click', async () => {
-        if (!confirm('Delete this product permanently?')) return;
+        if (!confirm('Delete this product?')) return;
         try {
           await api(`/products/${btn.dataset.delete}`, { method: 'DELETE' });
-          showToast('Product deleted', 'success');
+          showToast('Deleted', 'success');
           loadInventory();
         } catch (err) {
           showToast(err.message, 'error');
@@ -473,75 +288,36 @@ async function loadInventory() {
   }
 }
 
-function populateForm(product) {
-  editingProductId = product._id;
-  formTitle.textContent = 'Edit Product';
-  formSubmitBtn.textContent = 'Update Product';
-  formCancelBtn.style.display = 'inline-flex';
-
-  document.getElementById('p-title').value = product.title || '';
-  document.getElementById('p-desc').value = product.description || '';
-  document.getElementById('p-price').value = product.price || '';
-  document.getElementById('p-stock').value = product.stock ?? 10;
-  document.getElementById('p-video').value = product.videoUrl || '';
-
-  imageList.innerHTML = '';
-  const imgs = product.images && product.images.length ? product.images : [product.imageUrl || ''];
-  imgs.forEach(url => addImageRow(url));
-  toggleRemoveButtons();
-
-  loadCategoryOptions(product.category?._id || product.category || '');
-  showSection('products');
-  document.getElementById('p-title').focus();
+function showSection(name) {
+  Object.entries(sections).forEach(([k, el]) => { el.style.display = k === name ? 'block' : 'none'; });
+  document.querySelectorAll('.admin-sidebar-nav a').forEach(l => l.classList.toggle('active', l.dataset.section === name));
 }
 
-/* ===== Plugin Configuration ===== */
-const PLUGIN_STORAGE_KEY = 'zipstore_plugins';
-
-const AVAILABLE_PLUGINS = [
-  { id: 'discount', name: 'Discount Engine', desc: 'Applies 10% off on orders over $100.' },
-  { id: 'analytics', name: 'Analytics Tracker', desc: 'Tracks page views and user events.' },
-  { id: 'reviews', name: 'Reviews & Ratings', desc: 'Enables product review submissions.' },
-  { id: 'newsletter', name: 'Newsletter Signup', desc: 'Shows email capture popup on the storefront.' },
+/* ===== Plugins ===== */
+const PLUGINS = [
+  { id: 'discount', name: 'Discount Engine', desc: '10% off on orders over $100.' },
+  { id: 'analytics', name: 'Analytics Tracker', desc: 'Tracks page views and events.' },
+  { id: 'reviews', name: 'Reviews & Ratings', desc: 'Enables product reviews.' },
+  { id: 'newsletter', name: 'Newsletter Signup', desc: 'Email capture popup.' },
 ];
 
-function getPluginState() {
-  try {
-    return JSON.parse(localStorage.getItem(PLUGIN_STORAGE_KEY)) || {};
-  } catch {
-    return {};
-  }
-}
-
-function savePluginState(state) {
-  localStorage.setItem(PLUGIN_STORAGE_KEY, JSON.stringify(state));
-}
-
 function renderPlugins() {
-  const state = getPluginState();
+  const state = JSON.parse(localStorage.getItem('zipstore_plugins') || '{}');
   const list = document.getElementById('plugin-list');
-
-  list.innerHTML = AVAILABLE_PLUGINS.map(p => {
-    const enabled = state[p.id] || false;
-    return `
-      <div class="admin-plugin-card">
-        <div class="admin-plugin-info">
-          <h4>${p.name}</h4>
-          <p>${p.desc}</p>
-        </div>
-        <div class="toggle ${enabled ? 'active' : ''}" data-plugin="${p.id}"></div>
-      </div>
-    `;
+  list.innerHTML = PLUGINS.map(p => {
+    const on = state[p.id] || false;
+    return `<div class="admin-plugin-card">
+      <div class="admin-plugin-info"><h4>${p.name}</h4><p>${p.desc}</p></div>
+      <div class="toggle ${on ? 'active' : ''}" data-plugin="${p.id}"></div>
+    </div>`;
   }).join('');
-
   list.querySelectorAll('.toggle').forEach(el => {
     el.addEventListener('click', () => {
       const id = el.dataset.plugin;
-      const state = getPluginState();
+      const state = JSON.parse(localStorage.getItem('zipstore_plugins') || '{}');
       state[id] = !state[id];
-      savePluginState(state);
+      localStorage.setItem('zipstore_plugins', JSON.stringify(state));
       renderPlugins();
-      showToast(`${AVAILABLE_PLUGINS.find(p => p.id === id).name} ${state[id] ? 'enabled' : 'disabled'}`, 'success');
     });
   });
 }
@@ -549,3 +325,4 @@ function renderPlugins() {
 /* ===== Init ===== */
 loadDashboard();
 renderPlugins();
+loadCatSuggestions();
