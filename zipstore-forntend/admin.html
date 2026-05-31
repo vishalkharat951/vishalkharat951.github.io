@@ -23,6 +23,10 @@
         <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
         <span class="nav-text">Products</span>
       </a></li>
+      <li><a href="#categories" data-section="categories">
+        <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+        <span class="nav-text">Categories</span>
+      </a></li>
       <li><a href="#inventory" data-section="inventory">
         <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
         <span class="nav-text">Inventory</span>
@@ -77,26 +81,70 @@
             <textarea id="p-desc" rows="3" required></textarea>
           </div>
           <div class="form-group">
-            <label for="p-category">Category ID</label>
-            <input type="text" id="p-category" placeholder="Enter category ObjectId" required>
+            <label for="p-category">Category</label>
+            <select id="p-category" required>
+              <option value="">Select category...</option>
+            </select>
           </div>
           <div class="form-group">
             <label for="p-stock">Stock</label>
             <input type="number" id="p-stock" min="0" value="10" required>
           </div>
-          <div class="form-group">
-            <label for="p-image">Image URL</label>
-            <input type="url" id="p-image" placeholder="https://example.com/image.jpg">
+          <div class="form-group full-width">
+            <label>Images</label>
+            <div id="image-list">
+              <div class="image-input-row">
+                <input type="url" class="p-image" placeholder="https://example.com/image.jpg">
+                <button type="button" class="btn btn-danger btn-sm btn-remove-image" style="display:none">&times;</button>
+              </div>
+            </div>
+            <button type="button" class="btn btn-outline btn-sm" id="add-image-btn" style="margin-top:var(--space-2);color:var(--color-primary);border-color:var(--color-primary)">+ Add Image</button>
           </div>
           <div class="form-group">
             <label for="p-video">Video URL</label>
             <input type="url" id="p-video" placeholder="https://youtube.com/embed/...">
           </div>
-          <div class="form-group full-width" style="display:flex;gap:var(--space-3)">
+          <div class="form-group full-width" style="display:flex;gap:var(--space-3);flex-wrap:wrap">
             <button type="submit" class="btn btn-secondary" id="form-submit-btn">Create Product</button>
             <button type="button" class="btn btn-outline" id="form-cancel-btn" style="color:var(--color-text-secondary);border-color:var(--color-border);display:none">Cancel</button>
           </div>
         </form>
+      </div>
+    </div>
+
+    <div id="section-categories" style="display:none">
+      <h1>Manage Categories</h1>
+      <div class="admin-section">
+        <h2 id="cat-form-title">Add New Category</h2>
+        <form class="admin-form" id="category-form">
+          <div class="form-group">
+            <label for="c-name">Category Name</label>
+            <input type="text" id="c-name" required>
+          </div>
+          <div class="form-group">
+            <label for="c-slug">Slug</label>
+            <input type="text" id="c-slug" placeholder="my-category" required>
+          </div>
+          <div class="form-group">
+            <label for="c-parent">Parent Category</label>
+            <select id="c-parent">
+              <option value="">None (top-level)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="c-image">Category Image URL</label>
+            <input type="url" id="c-image" placeholder="https://example.com/cat.jpg">
+          </div>
+          <div class="form-group full-width" style="display:flex;gap:var(--space-3);flex-wrap:wrap">
+            <button type="submit" class="btn btn-secondary" id="cat-submit-btn">Create Category</button>
+            <button type="button" class="btn btn-outline" id="cat-cancel-btn" style="color:var(--color-text-secondary);border-color:var(--color-border);display:none">Cancel</button>
+          </div>
+        </form>
+      </div>
+      <div class="admin-section">
+        <h2>All Categories</h2>
+        <div id="category-list"></div>
+        <p id="category-empty" style="text-align:center;padding:var(--space-8);color:var(--color-text-secondary);display:none">No categories yet.</p>
       </div>
     </div>
 

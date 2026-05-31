@@ -65,6 +65,7 @@ const navLinks = document.querySelectorAll('.admin-sidebar-nav a');
 const sections = {
   dashboard: document.getElementById('section-dashboard'),
   products: document.getElementById('section-products'),
+  categories: document.getElementById('section-categories'),
   inventory: document.getElementById('section-inventory'),
   plugins: document.getElementById('section-plugins'),
 };
@@ -83,6 +84,7 @@ navLinks.forEach(link => {
     e.preventDefault();
     showSection(link.dataset.section);
     if (link.dataset.section === 'dashboard') loadDashboard();
+    if (link.dataset.section === 'categories') loadCategories();
     if (link.dataset.section === 'inventory') loadInventory();
   });
 });
@@ -110,11 +112,55 @@ async function loadDashboard() {
   }
 }
 
-/* ===== Products Form (Create / Update) ===== */
+/* ===== Multi-Image Input ===== */
+const imageList = document.getElementById('image-list');
+const addImageBtn = document.getElementById('add-image-btn');
+
+function getImageRows() {
+  return imageList.querySelectorAll('.image-input-row');
+}
+
+function getImageUrls() {
+  const urls = [];
+  getImageRows().forEach(row => {
+    const val = row.querySelector('.p-image').value.trim();
+    if (val) urls.push(val);
+  });
+  return urls;
+}
+
+function addImageRow(url) {
+  const row = document.createElement('div');
+  row.className = 'image-input-row';
+  row.innerHTML = `
+    <input type="url" class="p-image" placeholder="https://example.com/image.jpg" value="${url || ''}">
+    <button type="button" class="btn btn-danger btn-sm btn-remove-image">&times;</button>
+  `;
+  row.querySelector('.btn-remove-image').addEventListener('click', () => {
+    row.remove();
+    toggleRemoveButtons();
+  });
+  imageList.appendChild(row);
+  toggleRemoveButtons();
+}
+
+function toggleRemoveButtons() {
+  const rows = getImageRows();
+  rows.forEach((row, i) => {
+    row.querySelector('.btn-remove-image').style.display = rows.length > 1 ? '' : 'none';
+  });
+}
+
+addImageBtn.addEventListener('click', () => addImageRow(''));
+
+toggleRemoveButtons();
+
+/* ===== Products Form ===== */
 const productForm = document.getElementById('product-form');
 const formTitle = document.getElementById('form-title');
 const formSubmitBtn = document.getElementById('form-submit-btn');
 const formCancelBtn = document.getElementById('form-cancel-btn');
+const pCategory = document.getElementById('p-category');
 let editingProductId = null;
 
 function resetForm() {
@@ -123,20 +169,58 @@ function resetForm() {
   formTitle.textContent = 'Add New Product';
   formSubmitBtn.textContent = 'Create Product';
   formCancelBtn.style.display = 'none';
+  imageList.innerHTML = '';
+  addImageRow('');
+  toggleRemoveButtons();
 }
 
 formCancelBtn.addEventListener('click', resetForm);
 
+async function loadCategoryOptions(selectedId) {
+  try {
+    const data = await api('/categories');
+    const cats = data.categories || [];
+    pCategory.innerHTML = '<option value="">Select category...</option>';
+    function addOptions(list, depth) {
+      list.forEach(cat => {
+        const opt = document.createElement('option');
+        opt.value = cat._id;
+        opt.textContent = '  '.repeat(depth) + cat.name;
+        if (selectedId && cat._id === selectedId) opt.selected = true;
+        pCategory.appendChild(opt);
+      });
+    }
+    const topLevel = cats.filter(c => !c.parent);
+    topLevel.sort((a, b) => a.name.localeCompare(b.name));
+    topLevel.forEach(parent => {
+      addOptions([parent], 0);
+      const children = cats.filter(c => c.parent && c.parent._id === parent._id);
+      children.sort((a, b) => a.name.localeCompare(b.name));
+      addOptions(children, 1);
+    });
+  } catch (err) {
+    showToast('Failed to load categories: ' + err.message, 'error');
+  }
+}
+
 productForm.addEventListener('submit', async (e) => {
   e.preventDefault();
+
+  const images = getImageUrls();
+  const category = pCategory.value;
+
+  if (!category) {
+    showToast('Please select a category', 'error');
+    return;
+  }
 
   const body = {
     title: document.getElementById('p-title').value,
     description: document.getElementById('p-desc').value,
     price: parseFloat(document.getElementById('p-price').value),
-    category: document.getElementById('p-category').value,
+    category,
     stock: parseInt(document.getElementById('p-stock').value, 10),
-    imageUrl: document.getElementById('p-image').value || '',
+    images,
     videoUrl: document.getElementById('p-video').value || '',
   };
 
@@ -162,6 +246,175 @@ productForm.addEventListener('submit', async (e) => {
   }
 });
 
+/* ===== Categories Management ===== */
+const catForm = document.getElementById('category-form');
+const catFormTitle = document.getElementById('cat-form-title');
+const catSubmitBtn = document.getElementById('cat-submit-btn');
+const catCancelBtn = document.getElementById('cat-cancel-btn');
+const cParent = document.getElementById('c-parent');
+let editingCategoryId = null;
+
+function resetCatForm() {
+  catForm.reset();
+  editingCategoryId = null;
+  catFormTitle.textContent = 'Add New Category';
+  catSubmitBtn.textContent = 'Create Category';
+  catCancelBtn.style.display = 'none';
+  cParent.value = '';
+}
+
+catCancelBtn.addEventListener('click', resetCatForm);
+
+async function loadCategoryParentOptions(selectedId, excludeId) {
+  try {
+    const data = await api('/categories');
+    const cats = data.categories || [];
+    cParent.innerHTML = '<option value="">None (top-level)</option>';
+    cats
+      .filter(c => !c.parent && (!excludeId || c._id !== excludeId))
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .forEach(parent => {
+        const opt = document.createElement('option');
+        opt.value = parent._id;
+        opt.textContent = parent.name;
+        if (selectedId && parent._id === selectedId) opt.selected = true;
+        cParent.appendChild(opt);
+      });
+  } catch (err) {
+    showToast('Failed to load parent categories: ' + err.message, 'error');
+  }
+}
+
+catForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  const body = {
+    name: document.getElementById('c-name').value,
+    slug: document.getElementById('c-slug').value,
+    parent: document.getElementById('c-parent').value || null,
+    image: document.getElementById('c-image').value || '',
+  };
+
+  try {
+    if (editingCategoryId) {
+      await api(`/categories/${editingCategoryId}`, {
+        method: 'PUT',
+        body: JSON.stringify(body),
+      });
+      showToast('Category updated successfully', 'success');
+    } else {
+      await api('/categories', {
+        method: 'POST',
+        body: JSON.stringify(body),
+      });
+      showToast('Category created successfully', 'success');
+    }
+
+    resetCatForm();
+    loadCategories();
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+});
+
+function renderCategoryTree(categories) {
+  const container = document.getElementById('category-list');
+  const empty = document.getElementById('category-empty');
+
+  const topLevel = categories.filter(c => !c.parent);
+  if (topLevel.length === 0) {
+    container.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+
+  empty.style.display = 'none';
+  container.innerHTML = '<div class="cat-tree"></div>';
+  const tree = container.querySelector('.cat-tree');
+
+  topLevel.sort((a, b) => a.name.localeCompare(b.name)).forEach(parent => {
+    const children = categories.filter(c => c.parent && (c.parent._id === parent._id || c.parent === parent._id));
+    children.sort((a, b) => a.name.localeCompare(b.name));
+
+    const card = document.createElement('div');
+    card.className = 'cat-card';
+    card.innerHTML = `
+      <div class="cat-card-header">
+        ${parent.image ? `<img src="${parent.image}" class="cat-card-img">` : '<div class="cat-card-img-placeholder"></div>'}
+        <div class="cat-card-info">
+          <strong>${parent.name}</strong>
+          <span class="cat-card-slug">/${parent.slug}</span>
+        </div>
+        <div class="cat-card-actions">
+          <button class="btn btn-secondary btn-sm cat-edit" data-id="${parent._id}">Edit</button>
+          <button class="btn btn-danger btn-sm cat-delete" data-id="${parent._id}">Delete</button>
+        </div>
+      </div>
+      ${children.length ? `
+        <div class="cat-sub-list">
+          ${children.map(child => `
+            <div class="cat-sub-item">
+              ${child.image ? `<img src="${child.image}" class="cat-sub-img">` : '<div class="cat-sub-img-placeholder"></div>'}
+              <span>${child.name} <span class="cat-card-slug">/${child.slug}</span></span>
+              <div class="cat-card-actions">
+                <button class="btn btn-secondary btn-sm cat-edit" data-id="${child._id}">Edit</button>
+                <button class="btn btn-danger btn-sm cat-delete" data-id="${child._id}">Delete</button>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      ` : ''}
+    `;
+    tree.appendChild(card);
+  });
+
+  container.querySelectorAll('.cat-edit').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const cat = categories.find(c => c._id === btn.dataset.id);
+      if (cat) populateCatForm(cat, categories);
+    });
+  });
+
+  container.querySelectorAll('.cat-delete').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (!confirm('Delete this category permanently?')) return;
+      try {
+        await api(`/categories/${btn.dataset.id}`, { method: 'DELETE' });
+        showToast('Category deleted', 'success');
+        loadCategories();
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    });
+  });
+}
+
+function populateCatForm(cat, allCats) {
+  editingCategoryId = cat._id;
+  catFormTitle.textContent = 'Edit Category';
+  catSubmitBtn.textContent = 'Update Category';
+  catCancelBtn.style.display = 'inline-flex';
+
+  document.getElementById('c-name').value = cat.name || '';
+  document.getElementById('c-slug').value = cat.slug || '';
+  document.getElementById('c-image').value = cat.image || '';
+
+  const parentId = cat.parent && (cat.parent._id || cat.parent);
+  loadCategoryParentOptions(parentId, cat._id);
+}
+
+async function loadCategories() {
+  try {
+    const data = await api('/categories');
+    const cats = data.categories || [];
+    renderCategoryTree(cats);
+    loadCategoryParentOptions();
+    loadCategoryOptions();
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+}
+
 /* ===== Inventory Table ===== */
 const tbody = document.getElementById('inventory-tbody');
 const emptyRow = document.getElementById('inventory-empty');
@@ -179,7 +432,9 @@ async function loadInventory() {
 
     emptyRow.style.display = 'none';
 
-    tbody.innerHTML = products.map(p => `
+    tbody.innerHTML = products.map(p => {
+      const safe = JSON.stringify(p).replace(/'/g, '&#39;').replace(/"/g, '&quot;');
+      return `
       <tr>
         <td><strong>${p.title}</strong></td>
         <td>$${Number(p.price).toFixed(2)}</td>
@@ -187,12 +442,12 @@ async function loadInventory() {
         <td>${p.stock}</td>
         <td>
           <div class="actions">
-            <button class="btn btn-secondary btn-sm" data-edit='${JSON.stringify(p).replace(/'/g, '&#39;')}'>Edit</button>
+            <button class="btn btn-secondary btn-sm" data-edit='${safe}'>Edit</button>
             <button class="btn btn-danger btn-sm" data-delete="${p._id}">Delete</button>
           </div>
         </td>
       </tr>
-    `).join('');
+    `}).join('');
 
     tbody.querySelectorAll('[data-edit]').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -227,11 +482,15 @@ function populateForm(product) {
   document.getElementById('p-title').value = product.title || '';
   document.getElementById('p-desc').value = product.description || '';
   document.getElementById('p-price').value = product.price || '';
-  document.getElementById('p-category').value = product.category?._id || product.category || '';
   document.getElementById('p-stock').value = product.stock ?? 10;
-  document.getElementById('p-image').value = product.imageUrl || '';
   document.getElementById('p-video').value = product.videoUrl || '';
 
+  imageList.innerHTML = '';
+  const imgs = product.images && product.images.length ? product.images : [product.imageUrl || ''];
+  imgs.forEach(url => addImageRow(url));
+  toggleRemoveButtons();
+
+  loadCategoryOptions(product.category?._id || product.category || '');
   showSection('products');
   document.getElementById('p-title').focus();
 }

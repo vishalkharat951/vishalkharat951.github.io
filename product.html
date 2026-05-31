@@ -76,10 +76,18 @@
 
           const inStock = p.stock > 0;
 
+          const images = (p.images && p.images.length) ? p.images : (p.imageUrl ? [p.imageUrl] : []);
+          const mainImage = images[0] || 'https://placehold.co/600x600?text=No+Image';
+
           container.innerHTML = `
             <div class="product-detail">
-              <div>
-                <img src="${p.imageUrl || 'https://placehold.co/600x600?text=No+Image'}" alt="${p.title}" class="product-detail-image">
+              <div class="product-detail-images">
+                <img src="${mainImage}" alt="${p.title}" class="main-image" id="main-product-image">
+                ${images.length > 1 ? `
+                  <div class="product-thumbnails">
+                    ${images.map((img, i) => `<img src="${img}" alt="${p.title} ${i+1}" class="${i === 0 ? 'active' : ''}" data-index="${i}">`).join('')}
+                  </div>
+                ` : ''}
                 ${videoHtml}
               </div>
               <div class="product-detail-info">
@@ -101,6 +109,16 @@
               </div>
             </div>
           `;
+
+          if (images.length > 1) {
+            container.querySelectorAll('.product-thumbnails img').forEach(thumb => {
+              thumb.addEventListener('click', () => {
+                document.getElementById('main-product-image').src = thumb.src;
+                container.querySelectorAll('.product-thumbnails img').forEach(t => t.classList.remove('active'));
+                thumb.classList.add('active');
+              });
+            });
+          }
 
           let qty = 1;
           const qtyDisplay = document.getElementById('qty-display');

@@ -7,7 +7,7 @@ exports.getProducts = async (req, res, next) => {
       filter.category = req.query.category;
     }
 
-    const products = await Product.find(filter).populate('category', 'name slug');
+    const products = await Product.find(filter).populate('category', 'name slug parent');
     res.json({ count: products.length, products });
   } catch (err) {
     next(err);
@@ -16,7 +16,7 @@ exports.getProducts = async (req, res, next) => {
 
 exports.getProduct = async (req, res, next) => {
   try {
-    const product = await Product.findById(req.params.id).populate('category', 'name slug');
+    const product = await Product.findById(req.params.id).populate('category', 'name slug parent');
     if (!product) {
       return res.status(404).json({ error: 'Product not found' });
     }
@@ -28,13 +28,21 @@ exports.getProduct = async (req, res, next) => {
 
 exports.createProduct = async (req, res, next) => {
   try {
-    const { title, description, price, category, imageUrl, videoUrl, stock } = req.body;
+    const { title, description, price, category, images, videoUrl, stock } = req.body;
 
     if (!title || !description || !price || !category || stock === undefined) {
       return res.status(400).json({ error: 'title, description, price, category, and stock are required' });
     }
 
-    const product = await Product.create({ title, description, price, category, imageUrl, videoUrl, stock });
+    const product = await Product.create({
+      title,
+      description,
+      price,
+      category,
+      images: Array.isArray(images) ? images : [],
+      videoUrl,
+      stock,
+    });
     res.status(201).json({ message: 'Product created', product });
   } catch (err) {
     next(err);
@@ -43,7 +51,12 @@ exports.createProduct = async (req, res, next) => {
 
 exports.updateProduct = async (req, res, next) => {
   try {
-    const product = await Product.findByIdAndUpdate(req.params.id, req.body, {
+    const updateData = { ...req.body };
+    if (updateData.images && !Array.isArray(updateData.images)) {
+      updateData.images = [];
+    }
+
+    const product = await Product.findByIdAndUpdate(req.params.id, updateData, {
       new: true,
       runValidators: true,
     });

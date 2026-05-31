@@ -20,9 +20,9 @@ const productSchema = new mongoose.Schema({
     ref: 'Category',
     required: [true, 'Product category is required'],
   },
-  imageUrl: {
-    type: String,
-    default: '',
+  images: {
+    type: [String],
+    default: [],
   },
   videoUrl: {
     type: String,
