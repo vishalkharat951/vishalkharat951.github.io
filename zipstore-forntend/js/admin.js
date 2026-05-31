@@ -174,13 +174,9 @@ let categoryCache = [];
 
 async function loadCatSuggestions() {
   try {
-    const data = await api('/products');
-    const products = data.products || data;
-    const map = {};
-    products.forEach(p => {
-      if (p.category && p.category._id) map[p.category._id] = p.category.name;
-    });
-    categoryCache = Object.entries(map).map(([id, name]) => ({ _id: id, name }));
+    const data = await api('/categories');
+    const categories = data.categories || data;
+    categoryCache = categories.map(c => ({ _id: c._id, name: c.name }));
     const dl = document.getElementById('cat-suggestions');
     dl.innerHTML = categoryCache.map(c => `<option value="${c.name}">`).join('');
   } catch (_) {}
