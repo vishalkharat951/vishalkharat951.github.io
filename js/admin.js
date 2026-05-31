@@ -239,7 +239,7 @@ productForm.addEventListener('submit', async (e) => {
       price: parseFloat(document.getElementById('p-price').value),
       category: categoryId,
       stock: parseInt(document.getElementById('p-stock').value, 10) || 0,
-      imageUrl: images.length ? JSON.stringify(images) : '',
+      images: images,
       videoUrl: document.getElementById('p-video').value || '',
     };
 
