@@ -9,8 +9,8 @@ exports.createOrder = async (req, res, next) => {
       return res.status(400).json({ error: 'Order must contain at least one item' });
     }
 
-    if (!shippingAddress || !shippingAddress.street || !shippingAddress.city || !shippingAddress.state || !shippingAddress.zip || !shippingAddress.country) {
-      return res.status(400).json({ error: 'Complete shipping address is required' });
+    if (!shippingAddress || !shippingAddress.street || !shippingAddress.city || !shippingAddress.state) {
+      return res.status(400).json({ error: 'Street address, city, and state are required' });
     }
 
     const productIds = items.map(item => item.productId);

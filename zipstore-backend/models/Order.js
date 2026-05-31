@@ -37,11 +37,13 @@ const orderSchema = new mongoose.Schema({
     min: 0,
   },
   shippingAddress: {
+    name: { type: String, default: '' },
+    phone: { type: String, default: '' },
     street: { type: String, required: true },
     city: { type: String, required: true },
     state: { type: String, required: true },
-    zip: { type: String, required: true },
-    country: { type: String, required: true },
+    zip: { type: String, default: '' },
+    country: { type: String, default: '' },
   },
   paymentMethod: {
     type: String,

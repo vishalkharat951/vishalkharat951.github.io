@@ -142,9 +142,9 @@
                 <details style="margin-top:var(--space-3);font-size:var(--font-size-sm)">
                   <summary style="cursor:pointer;color:var(--color-text-secondary)">Shipping Details</summary>
                   <div style="padding:var(--space-3);background:var(--color-bg);border-radius:var(--radius-md);margin-top:var(--space-2)">
+                    <p><strong>${o.shippingAddress?.name || o.userId?.name || ''}</strong> ${o.shippingAddress?.phone ? '&mdash; ' + o.shippingAddress.phone : ''}</p>
                     <p>${o.shippingAddress?.street || ''}</p>
-                    <p>${o.shippingAddress?.city || ''}, ${o.shippingAddress?.state || ''} ${o.shippingAddress?.zip || ''}</p>
-                    <p>${o.shippingAddress?.country || ''}</p>
+                    <p>${o.shippingAddress?.city || ''}, ${o.shippingAddress?.state || ''}</p>
                     ${o.transactionId ? `<p style="margin-top:var(--space-2);color:var(--color-text-secondary)">Transaction: ${o.transactionId}</p>` : ''}
                   </div>
                 </details>

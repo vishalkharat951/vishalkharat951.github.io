@@ -366,7 +366,8 @@ function openOrderModal(order) {
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4);margin-bottom:var(--space-4)">
       <div><strong>Order ID</strong><br><code style="font-size:var(--font-size-sm)">${order._id}</code></div>
       <div><strong>Order Date</strong><br>${new Date(order.createdAt).toLocaleString()}</div>
-      <div><strong>Customer</strong><br>${order.userId?.name || '—'}</div>
+      <div><strong>Customer</strong><br>${order.shippingAddress?.name || order.userId?.name || '—'}</div>
+      <div><strong>Phone</strong><br>${order.shippingAddress?.phone || '—'}</div>
       <div><strong>Email</strong><br>${order.userId?.email || '—'}</div>
       <div><strong>Payment</strong><br><span class="status-badge status-${order.paymentStatus}">${order.paymentStatus}</span> / ${order.paymentMethod || 'mock'}</div>
       <div><strong>Transaction ID</strong><br>${order.transactionId || '—'}</div>
@@ -375,7 +376,7 @@ function openOrderModal(order) {
     </div>
     <div style="margin-bottom:var(--space-4)">
       <strong>Shipping Address</strong><br>
-      ${order.shippingAddress?.street || ''}, ${order.shippingAddress?.city || ''}, ${order.shippingAddress?.state || ''} ${order.shippingAddress?.zip || ''}, ${order.shippingAddress?.country || ''}
+      ${order.shippingAddress?.street || ''}, ${order.shippingAddress?.city || ''}, ${order.shippingAddress?.state || ''}
     </div>
     <div>
       <strong>Ordered Products</strong>
