@@ -916,13 +916,17 @@ input, select {
 }
 
 .admin-form {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: var(--space-4);
 }
 
 .admin-form .form-group {
   margin-bottom: 0;
+}
+
+.admin-form .form-group.full-width {
+  grid-column: 1 / -1;
 }
 
 .admin-form .form-group label {
@@ -942,6 +946,7 @@ input, select {
   width: 100%;
   transition: border-color var(--transition), box-shadow var(--transition);
   background: var(--color-bg);
+  box-sizing: border-box;
 }
 
 .admin-form .form-group input:focus,
@@ -960,17 +965,6 @@ input, select {
 .admin-form .form-group input[type="url"] {
   font-size: var(--font-size-xs);
   color: var(--color-text-secondary);
-}
-
-.admin-form-actions {
-  display: flex;
-  gap: var(--space-3);
-  align-items: center;
-  padding-top: var(--space-2);
-}
-
-.admin-form-actions .btn {
-  min-width: 160px;
 }
 
 .admin-table-wrapper {
@@ -1115,13 +1109,8 @@ input, select {
     display: none;
   }
 
-  .admin-form-actions {
-    flex-direction: column;
-  }
-
-  .admin-form-actions .btn {
-    min-width: unset;
-    width: 100%;
+  .admin-form {
+    grid-template-columns: 1fr;
   }
 }
 
