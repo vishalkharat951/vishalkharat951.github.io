@@ -44,15 +44,15 @@ async function api(path, options = {}) {
 /* ===== Sidebar ===== */
 const sidebar = document.getElementById('adminSidebar');
 const sidebarToggle = document.getElementById('sidebarToggle');
-const STORAGE_KEY = 'zipstore_sidebar_collapsed';
+const SIDEBAR_STORAGE_KEY = 'zipstore_sidebar_collapsed';
 
 sidebarToggle.addEventListener('click', () => {
   const collapsed = !sidebar.classList.contains('collapsed');
   sidebar.classList.toggle('collapsed', collapsed);
-  localStorage.setItem(STORAGE_KEY, collapsed ? '1' : '0');
+  localStorage.setItem(SIDEBAR_STORAGE_KEY, collapsed ? '1' : '0');
 });
 
-if (localStorage.getItem(STORAGE_KEY) === '1') {
+if (localStorage.getItem(SIDEBAR_STORAGE_KEY) === '1') {
   sidebar.classList.add('collapsed');
 }
 
@@ -68,15 +68,17 @@ document.querySelectorAll('.admin-sidebar-nav a').forEach(link => {
   link.addEventListener('click', (e) => {
     e.preventDefault();
     const name = link.dataset.section;
-    Object.entries(sections).forEach(([key, el]) => {
-      el.style.display = key === name ? 'block' : 'none';
-    });
-    document.querySelectorAll('.admin-sidebar-nav a').forEach(l => l.classList.toggle('active', l.dataset.section === name));
+    showSection(name);
     if (name === 'dashboard') loadDashboard();
     if (name === 'inventory') loadInventory();
     if (name === 'products') loadCatSuggestions();
   });
 });
+
+function showSection(name) {
+  Object.entries(sections).forEach(([key, el]) => { el.style.display = key === name ? 'block' : 'none'; });
+  document.querySelectorAll('.admin-sidebar-nav a').forEach(l => l.classList.toggle('active', l.dataset.section === name));
+}
 
 /* ===== Dashboard ===== */
 async function loadDashboard() {
@@ -95,30 +97,72 @@ async function loadDashboard() {
   }
 }
 
-/* ===== Images ===== */
-const imageList = document.getElementById('image-list');
+/* ===== Drag & Drop Images ===== */
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+const previews = document.getElementById('image-previews');
+let uploadedImages = [];
 
-function addImageRow(url) {
-  const row = document.createElement('div');
-  row.className = 'image-input-row';
-  row.innerHTML = `<input type="url" class="p-image" placeholder="https://example.com/image.jpg" value="${url || ''}"><button type="button" class="btn btn-danger btn-sm btn-remove-image">&times;</button>`;
-  row.querySelector('.btn-remove-image').addEventListener('click', () => { row.remove(); toggleRemoveBtns(); });
-  imageList.appendChild(row);
-  toggleRemoveBtns();
+dropZone.addEventListener('click', () => fileInput.click());
+
+dropZone.addEventListener('dragover', (e) => {
+  e.preventDefault();
+  dropZone.classList.add('drag-over');
+});
+
+dropZone.addEventListener('dragleave', () => {
+  dropZone.classList.remove('drag-over');
+});
+
+dropZone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  dropZone.classList.remove('drag-over');
+  handleFiles(e.dataTransfer.files);
+});
+
+fileInput.addEventListener('change', () => {
+  handleFiles(fileInput.files);
+  fileInput.value = '';
+});
+
+function handleFiles(files) {
+  for (const file of files) {
+    if (!file.type.startsWith('image/')) continue;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      uploadedImages.push(e.target.result);
+      renderPreviews();
+    };
+    reader.readAsDataURL(file);
+  }
 }
 
-function toggleRemoveBtns() {
-  const rows = imageList.querySelectorAll('.image-input-row');
-  rows.forEach((r, i) => { r.querySelector('.btn-remove-image').style.display = rows.length > 1 ? '' : 'none'; });
+function renderPreviews() {
+  if (!uploadedImages.length) {
+    previews.innerHTML = '';
+    return;
+  }
+  previews.innerHTML = uploadedImages.map((src, i) => `
+    <div class="preview-item">
+      <img src="${src}">
+      <button type="button" class="preview-remove" data-index="${i}">&times;</button>
+    </div>
+  `).join('');
+  previews.querySelectorAll('.preview-remove').forEach(btn => {
+    btn.addEventListener('click', () => {
+      uploadedImages.splice(parseInt(btn.dataset.index), 1);
+      renderPreviews();
+    });
+  });
 }
 
-document.getElementById('add-image-btn').addEventListener('click', () => addImageRow(''));
-toggleRemoveBtns();
+function setPreviews(images) {
+  uploadedImages = images.filter(s => s);
+  renderPreviews();
+}
 
-function getImageUrls() {
-  const urls = [];
-  imageList.querySelectorAll('.p-image').forEach(inp => { const v = inp.value.trim(); if (v) urls.push(v); });
-  return urls;
+function getImageData() {
+  return [...uploadedImages];
 }
 
 /* ===== Category Cache ===== */
@@ -172,9 +216,7 @@ function resetForm() {
   formTitle.textContent = 'New Product';
   formSubmitBtn.textContent = 'Save Product';
   formCancelBtn.style.display = 'none';
-  imageList.innerHTML = '';
-  addImageRow('');
-  toggleRemoveBtns();
+  setPreviews([]);
 }
 
 formCancelBtn.addEventListener('click', resetForm);
@@ -189,13 +231,15 @@ productForm.addEventListener('submit', async (e) => {
     const categoryId = await resolveCategory(catInput);
     if (!categoryId) { throw new Error('Please enter a category'); }
 
+    const images = getImageData();
+
     const body = {
       title: document.getElementById('p-title').value,
       description: document.getElementById('p-desc').value,
       price: parseFloat(document.getElementById('p-price').value),
       category: categoryId,
       stock: parseInt(document.getElementById('p-stock').value, 10) || 0,
-      images: getImageUrls(),
+      imageUrl: images.length ? JSON.stringify(images) : '',
       videoUrl: document.getElementById('p-video').value || '',
     };
 
@@ -221,6 +265,18 @@ productForm.addEventListener('submit', async (e) => {
 const tbody = document.getElementById('inventory-tbody');
 const emptyRow = document.getElementById('inventory-empty');
 
+function parseImages(product) {
+  if (product.images && product.images.length) return product.images;
+  if (product.imageUrl) {
+    try {
+      const parsed = JSON.parse(product.imageUrl);
+      if (Array.isArray(parsed)) return parsed;
+    } catch {}
+    return [product.imageUrl];
+  }
+  return [];
+}
+
 async function loadInventory() {
   try {
     const data = await api('/products');
@@ -235,8 +291,15 @@ async function loadInventory() {
     emptyRow.style.display = 'none';
     tbody.innerHTML = products.map(p => {
       const safe = JSON.stringify(p).replace(/'/g, '&#39;').replace(/"/g, '&quot;');
+      const imgs = parseImages(p);
+      const thumb = imgs[0] || '';
       return `<tr>
-        <td><strong>${p.title}</strong></td>
+        <td>
+          <div style="display:flex;align-items:center;gap:var(--space-3)">
+            ${thumb ? `<img src="${thumb}" style="width:40px;height:40px;border-radius:var(--radius-sm);object-fit:cover;flex-shrink:0">` : ''}
+            <strong>${p.title}</strong>
+          </div>
+        </td>
         <td>$${Number(p.price).toFixed(2)}</td>
         <td>${p.category?.name || '—'}</td>
         <td>${p.stock}</td>
@@ -262,10 +325,7 @@ async function loadInventory() {
         document.getElementById('p-category').value = p.category?.name || '';
         document.getElementById('p-stock').value = p.stock ?? 10;
         document.getElementById('p-video').value = p.videoUrl || '';
-        imageList.innerHTML = '';
-        const imgs = p.images && p.images.length ? p.images : [p.imageUrl || ''];
-        imgs.forEach(url => addImageRow(url));
-        toggleRemoveBtns();
+        setPreviews(parseImages(p));
         showSection('products');
         document.getElementById('p-title').focus();
       });
@@ -286,11 +346,6 @@ async function loadInventory() {
   } catch (err) {
     showToast(err.message, 'error');
   }
-}
-
-function showSection(name) {
-  Object.entries(sections).forEach(([k, el]) => { el.style.display = k === name ? 'block' : 'none'; });
-  document.querySelectorAll('.admin-sidebar-nav a').forEach(l => l.classList.toggle('active', l.dataset.section === name));
 }
 
 /* ===== Plugins ===== */

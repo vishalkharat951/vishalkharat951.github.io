@@ -76,7 +76,7 @@
 
           const inStock = p.stock > 0;
 
-          const images = (p.images && p.images.length) ? p.images : (p.imageUrl ? [p.imageUrl] : []);
+          const images = (p.images && p.images.length) ? p.images : (p.imageUrl ? (p.imageUrl[0] === '[' ? JSON.parse(p.imageUrl) : [p.imageUrl]) : []);
           const mainImage = images[0] || 'https://placehold.co/600x600?text=No+Image';
 
           container.innerHTML = `
