@@ -10,7 +10,8 @@
   <nav class="navbar">
     <div class="container">
       <a href="index.html" class="navbar-brand">ZipStore</a>
-      <ul class="navbar-links">
+      <button class="nav-toggle" id="navToggle" aria-label="Menu">☰</button>
+      <ul class="navbar-links" id="navLinks">
         <li><a href="index.html" class="active">Home</a></li>
         <li><a href="shop.html">Shop</a></li>
         <li><a href="cart.html" class="cart-badge">Cart <span class="cart-count">0</span></a></li>
@@ -42,6 +43,11 @@
   <div class="toast" id="toast"></div>
 
   <script src="js/cart.js"></script>
+  <script>
+    document.getElementById('navToggle')?.addEventListener('click', () => {
+      document.getElementById('navLinks')?.classList.toggle('open');
+    });
+  </script>
   <script>
     const featuredGrid = document.getElementById('featured-grid');
 
