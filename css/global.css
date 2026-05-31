@@ -811,12 +811,18 @@ input, select {
   font-size: var(--font-size-sm);
   font-weight: 500;
   transition: all var(--transition);
+  border-left: 3px solid transparent;
 }
 
-.admin-sidebar-nav li a:hover,
+.admin-sidebar-nav li a:hover {
+  background: #334155;
+  color: var(--color-white);
+}
+
 .admin-sidebar-nav li a.active {
   background: #334155;
   color: var(--color-white);
+  border-left-color: var(--color-primary);
 }
 
 .admin-sidebar-footer {
@@ -830,6 +836,7 @@ input, select {
   display: flex;
   align-items: center;
   gap: var(--space-2);
+  transition: color var(--transition);
 }
 
 .admin-sidebar-footer a:hover {
@@ -846,6 +853,15 @@ input, select {
   font-size: var(--font-size-2xl);
   font-weight: 700;
   margin-bottom: var(--space-6);
+  letter-spacing: -0.02em;
+}
+
+.admin-main h1:first-child {
+  margin-top: 0;
+}
+
+.admin-main > div {
+  max-width: 960px;
 }
 
 .admin-cards {
@@ -860,6 +876,12 @@ input, select {
   border-radius: var(--radius-lg);
   padding: var(--space-5) var(--space-6);
   box-shadow: var(--shadow-sm);
+  border: 1px solid var(--color-border);
+  transition: box-shadow var(--transition);
+}
+
+.admin-card:hover {
+  box-shadow: var(--shadow-md);
 }
 
 .admin-card h3 {
@@ -882,6 +904,7 @@ input, select {
   padding: var(--space-6);
   box-shadow: var(--shadow-sm);
   margin-bottom: var(--space-6);
+  border: 1px solid var(--color-border);
 }
 
 .admin-section h2 {
@@ -893,8 +916,8 @@ input, select {
 }
 
 .admin-form {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
+  flex-direction: column;
   gap: var(--space-4);
 }
 
@@ -902,8 +925,52 @@ input, select {
   margin-bottom: 0;
 }
 
-.admin-form .form-group.full-width {
-  grid-column: 1 / -1;
+.admin-form .form-group label {
+  display: block;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: var(--space-1);
+}
+
+.admin-form .form-group input,
+.admin-form .form-group textarea {
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  width: 100%;
+  transition: border-color var(--transition), box-shadow var(--transition);
+  background: var(--color-bg);
+}
+
+.admin-form .form-group input:focus,
+.admin-form .form-group textarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-light);
+  background: var(--color-white);
+}
+
+.admin-form .form-group textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.admin-form .form-group input[type="url"] {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+}
+
+.admin-form-actions {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  padding-top: var(--space-2);
+}
+
+.admin-form-actions .btn {
+  min-width: 160px;
 }
 
 .admin-table-wrapper {
@@ -916,6 +983,10 @@ input, select {
   font-size: var(--font-size-sm);
 }
 
+.admin-table thead {
+  background: #f8fafc;
+}
+
 .admin-table th {
   text-align: left;
   padding: var(--space-3) var(--space-4);
@@ -923,6 +994,9 @@ input, select {
   color: var(--color-text-secondary);
   border-bottom: 2px solid var(--color-border);
   white-space: nowrap;
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .admin-table td {
@@ -931,13 +1005,26 @@ input, select {
   vertical-align: middle;
 }
 
-.admin-table tr:hover td {
+.admin-table tbody tr {
+  transition: background var(--transition);
+}
+
+.admin-table tbody tr:hover {
   background: #f8fafc;
 }
 
 .admin-table .actions {
   display: flex;
   gap: var(--space-2);
+  justify-content: flex-end;
+}
+
+.admin-table td:last-child {
+  text-align: right;
+}
+
+.admin-table th:last-child {
+  text-align: right;
 }
 
 .admin-plugin-card {
@@ -946,6 +1033,7 @@ input, select {
   justify-content: space-between;
   padding: var(--space-4) 0;
   border-bottom: 1px solid var(--color-border);
+  gap: var(--space-4);
 }
 
 .admin-plugin-card:last-child {
@@ -961,6 +1049,7 @@ input, select {
 .admin-plugin-info p {
   font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
+  max-width: 480px;
 }
 
 .toggle {
@@ -1026,8 +1115,13 @@ input, select {
     display: none;
   }
 
-  .admin-form {
-    grid-template-columns: 1fr;
+  .admin-form-actions {
+    flex-direction: column;
+  }
+
+  .admin-form-actions .btn {
+    min-width: unset;
+    width: 100%;
   }
 }
 
