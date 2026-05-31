@@ -42,6 +42,24 @@ function api(path, options = {}) {
   });
 }
 
+/* ===== Sidebar Toggle ===== */
+const sidebar = document.getElementById('adminSidebar');
+const sidebarToggle = document.getElementById('sidebarToggle');
+const SIDEBAR_STORAGE_KEY = 'zipstore_sidebar_collapsed';
+
+function setSidebarState(collapsed) {
+  sidebar.classList.toggle('collapsed', collapsed);
+  localStorage.setItem(SIDEBAR_STORAGE_KEY, collapsed ? '1' : '0');
+}
+
+sidebarToggle.addEventListener('click', () => {
+  setSidebarState(!sidebar.classList.contains('collapsed'));
+});
+
+if (localStorage.getItem(SIDEBAR_STORAGE_KEY) === '1') {
+  sidebar.classList.add('collapsed');
+}
+
 /* ===== Navigation ===== */
 const navLinks = document.querySelectorAll('.admin-sidebar-nav a');
 const sections = {
