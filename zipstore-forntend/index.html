@@ -27,12 +27,7 @@
     </div>
   </section>
 
-  <section class="section">
-    <div class="container">
-      <h2 class="section-title">Featured Products</h2>
-      <div class="product-grid" id="featured-grid"></div>
-    </div>
-  </section>
+  <section class="section" id="category-sections"></section>
 
   <footer class="footer">
     <div class="container">
@@ -49,31 +44,53 @@
     });
   </script>
   <script>
-    const featuredGrid = document.getElementById('featured-grid');
+    const categorySections = document.getElementById('category-sections');
+
+    function renderProductCard(p) {
+      const imgSrc = (p.images && p.images[0]) || (p.imageUrl && p.imageUrl[0] === '[' ? JSON.parse(p.imageUrl)[0] : p.imageUrl) || 'https://placehold.co/400x400?text=No+Image';
+      return `
+        <div class="product-card">
+          <img src="${imgSrc}" alt="${p.title}" class="product-card-image" loading="lazy">
+          <div class="product-card-body">
+            <span class="product-card-category">${p.category?.name || 'General'}</span>
+            <h3 class="product-card-title">${p.title}</h3>
+            <p class="product-card-price">$${Number(p.price).toFixed(2)}</p>
+            <div class="product-card-footer">
+              <a href="product.html?id=${p._id}" class="btn btn-secondary btn-sm">View</a>
+              <button class="btn btn-outline btn-sm" onclick="Cart.add(${JSON.stringify(p).replace(/"/g, '&quot;')})">Add to Cart</button>
+            </div>
+          </div>
+        </div>`;
+    }
 
     fetch(`${API_BASE_URL}/products`)
       .then(r => r.json())
       .then(data => {
         const products = data.products || data;
-        const featured = products.slice(0, 8);
 
-        featuredGrid.innerHTML = featured.map(p => `
-          <div class="product-card">
-            <img src="${(p.images && p.images[0]) || (p.imageUrl && p.imageUrl[0] === '[' ? JSON.parse(p.imageUrl)[0] : p.imageUrl) || 'https://placehold.co/400x400?text=No+Image'}" alt="${p.title}" class="product-card-image" loading="lazy">
-            <div class="product-card-body">
-              <span class="product-card-category">${p.category?.name || 'General'}</span>
-              <h3 class="product-card-title">${p.title}</h3>
-              <p class="product-card-price">$${Number(p.price).toFixed(2)}</p>
-              <div class="product-card-footer">
-                <a href="product.html?id=${p._id}" class="btn btn-secondary btn-sm">View</a>
-                <button class="btn btn-outline btn-sm" onclick="Cart.add(${JSON.stringify(p).replace(/"/g, '&quot;')})">Add to Cart</button>
-              </div>
-            </div>
+        const grouped = {};
+        products.forEach(p => {
+          const catName = p.category?.name || 'General';
+          if (!grouped[catName]) grouped[catName] = [];
+          grouped[catName].push(p);
+        });
+
+        const entries = Object.entries(grouped);
+
+        if (!entries.length) {
+          categorySections.innerHTML = '<div class="container"><p class="error-message">No products available.</p></div>';
+          return;
+        }
+
+        categorySections.innerHTML = entries.map(([catName, catProducts]) => `
+          <div class="container" style="margin-bottom:var(--space-8)">
+            <h2 class="section-title">${catName}</h2>
+            <div class="product-grid">${catProducts.map(renderProductCard).join('')}</div>
           </div>
         `).join('');
       })
       .catch(() => {
-        featuredGrid.innerHTML = '<p class="error-message">Failed to load products. Make sure the API is running.</p>';
+        categorySections.innerHTML = '<div class="container"><p class="error-message">Failed to load products. Make sure the API is running.</p></div>';
       });
   </script>
 </body>

@@ -98,28 +98,25 @@
     }
 
     function loadCategories() {
-      return fetch(`${API_BASE_URL}/products`)
+      return fetch(`${API_BASE_URL}/categories`)
         .then(r => r.json())
         .then(data => {
-          const products = data.products || data;
-          const cats = {};
-          products.forEach(p => {
-            if (p.category && p.category._id) {
-              cats[p.category._id] = p.category.name;
-            }
-          });
-          allCategories = Object.entries(cats).map(([id, name]) => ({ _id: id, name }));
+          const categories = data.categories || data;
+          allCategories = categories.map(c => ({ _id: c._id, name: c.name }));
           categoryFilter.innerHTML = '<option value="">All Categories</option>' +
             allCategories.map(c => `<option value="${c._id}">${c.name}</option>`).join('');
         });
     }
 
-    fetch(`${API_BASE_URL}/products`)
-      .then(r => r.json())
-      .then(data => {
-        allProducts = data.products || data;
-        return loadCategories();
-      })
+    function loadProducts() {
+      return fetch(`${API_BASE_URL}/products`)
+        .then(r => r.json())
+        .then(data => {
+          allProducts = data.products || data;
+        });
+    }
+
+    Promise.all([loadProducts(), loadCategories()])
       .then(() => renderProducts())
       .catch(() => {
         grid.innerHTML = '<p class="error-message">Failed to load products. Make sure the API is running.</p>';
