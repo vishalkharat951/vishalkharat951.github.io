@@ -400,14 +400,23 @@ orderModal.addEventListener('click', (e) => {
 });
 
 async function deleteOrder(orderId) {
-  if (!confirm('Delete this order permanently?')) return;
+  if (!confirm('Cancel / remove this order?')) return;
   try {
     await api(`/admin/orders/${orderId}`, { method: 'DELETE' });
     showToast('Order deleted', 'success');
-    loadOrders();
-  } catch (err) {
-    showToast(err.message, 'error');
+  } catch {
+    try {
+      await api(`/admin/orders/${orderId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ orderStatus: 'cancelled' }),
+      });
+      showToast('Order cancelled (delete not yet available — Render needs redeploy)', 'success');
+    } catch (err2) {
+      showToast(err2.message, 'error');
+      return;
+    }
   }
+  loadOrders();
 }
 
 async function loadOrders() {
