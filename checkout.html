@@ -112,7 +112,19 @@
             </div>
           </div>
 
-          <button type="submit" class="btn btn-secondary btn-block">Place Order — $${total.toFixed(2)}</button>
+          <div style="margin-bottom:var(--space-4)">
+            <label style="display:block;font-weight:600;margin-bottom:var(--space-2)">Payment Method</label>
+            <label style="display:inline-flex;align-items:center;gap:var(--space-2);margin-right:var(--space-4);cursor:pointer">
+              <input type="radio" name="paymentMethod" value="mock" checked>
+              Mock Payment
+            </label>
+            <label style="display:inline-flex;align-items:center;gap:var(--space-2);cursor:pointer">
+              <input type="radio" name="paymentMethod" value="phonepe">
+              PhonePe
+            </label>
+          </div>
+
+          <button type="submit" class="btn btn-secondary btn-block" id="place-order-btn">Place Order — $${total.toFixed(2)}</button>
         </form>
       `;
 
@@ -138,6 +150,10 @@
           shippingAddress,
         };
 
+        const btn = document.getElementById('place-order-btn');
+        btn.disabled = true;
+        btn.textContent = 'Processing...';
+
         try {
           const orderRes = await fetch(`${API_BASE_URL}/orders`, {
             method: 'POST',
@@ -151,11 +167,36 @@
           }
 
           const order = await orderRes.json();
+          const orderId = order.order._id || order.order.id;
+          const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
+
+          if (paymentMethod === 'phonepe') {
+            const ppRes = await fetch(`${API_BASE_URL}/payments/phonepe-initiate`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+              body: JSON.stringify({ orderId }),
+            });
+
+            if (!ppRes.ok) {
+              const ppErr = await ppRes.json();
+              throw new Error(ppErr.error || 'PhonePe initiation failed');
+            }
+
+            const ppData = await ppRes.json();
+
+            if (ppData.redirectUrl) {
+              Cart.clear();
+              window.location.href = ppData.redirectUrl;
+              return;
+            }
+
+            throw new Error('No redirect URL from PhonePe');
+          }
 
           const payRes = await fetch(`${API_BASE_URL}/payments/checkout-mock`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-            body: JSON.stringify({ orderId: order.order._id || order.order.id }),
+            body: JSON.stringify({ orderId }),
           });
 
           if (!payRes.ok) {
@@ -169,13 +210,15 @@
           checkoutView.innerHTML = `
             <div class="cart-empty">
               <h2>Order Confirmed!</h2>
-              <p>Your order (ID: ${order.order._id || order.order.id}) has been placed successfully.</p>
+              <p>Your order (ID: ${orderId}) has been placed successfully.</p>
               <p>Payment status: <strong>${payment.order.paymentStatus}</strong></p>
-              <p style="margin-top:var(--space-4);font-size:var(--font-size-sm);color:var(--color-text-secondary)">Mock Token: ${payment.mockToken}</p>
-              <a href="shop.html" class="btn btn-secondary" style="margin-top:var(--space-6)">Continue Shopping</a>
+              <p style="margin-top:var(--space-4)"><a href="my-orders.html" class="btn btn-secondary">View My Orders</a></p>
+              <a href="shop.html" class="btn btn-outline-dark" style="margin-top:var(--space-3)">Continue Shopping</a>
             </div>
           `;
         } catch (err) {
+          btn.disabled = false;
+          btn.textContent = 'Place Order — $' + total.toFixed(2);
           showToast(err.message || 'Checkout failed. Please try again.', 'error');
         }
       });

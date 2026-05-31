@@ -61,6 +61,8 @@ const sections = {
   dashboard: document.getElementById('section-dashboard'),
   products: document.getElementById('section-products'),
   inventory: document.getElementById('section-inventory'),
+  orders: document.getElementById('section-orders'),
+  categories: document.getElementById('section-categories'),
   plugins: document.getElementById('section-plugins'),
 };
 
@@ -72,6 +74,8 @@ document.querySelectorAll('.admin-sidebar-nav a').forEach(link => {
     if (name === 'dashboard') loadDashboard();
     if (name === 'inventory') loadInventory();
     if (name === 'products') loadCatSuggestions();
+    if (name === 'orders') loadOrders();
+    if (name === 'categories') loadCategories();
   });
 });
 
@@ -85,7 +89,7 @@ async function loadDashboard() {
   try {
     const [pData, oData] = await Promise.all([
       api('/products'),
-      api('/admin/orders'),
+      api('/admin/orders').catch(() => ({ orders: [] })),
     ]);
     const products = pData.products || pData;
     const orders = oData.orders || oData;
@@ -338,6 +342,201 @@ async function loadInventory() {
           await api(`/products/${btn.dataset.delete}`, { method: 'DELETE' });
           showToast('Deleted', 'success');
           loadInventory();
+        } catch (err) {
+          showToast(err.message, 'error');
+        }
+      });
+    });
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+}
+
+/* ===== Order Management ===== */
+const ordersTbody = document.getElementById('orders-tbody');
+const ordersEmpty = document.getElementById('orders-empty');
+
+const ORDER_STATUSES = ['pending', 'confirmed', 'packed', 'shipped', 'delivered', 'cancelled'];
+
+async function loadOrders() {
+  try {
+    const data = await api('/admin/orders');
+    const orders = data.orders || data;
+
+    if (!orders.length) {
+      ordersTbody.innerHTML = '';
+      ordersEmpty.style.display = 'block';
+      return;
+    }
+
+    ordersEmpty.style.display = 'none';
+    ordersTbody.innerHTML = orders.map(o => {
+      const itemCount = o.items.reduce((s, i) => s + i.quantity, 0);
+      const date = new Date(o.createdAt).toLocaleDateString();
+      const statusOptions = ORDER_STATUSES.map(s =>
+        `<option value="${s}"${s === o.orderStatus ? ' selected' : ''}>${s.charAt(0).toUpperCase() + s.slice(1)}</option>`
+      ).join('');
+      return `<tr>
+        <td><code>${o._id.slice(-8)}</code></td>
+        <td>
+          <strong>${o.userId?.name || '—'}</strong><br>
+          <span style="font-size:var(--font-size-xs);color:var(--color-text-secondary)">${o.userId?.email || ''}</span>
+        </td>
+        <td>${itemCount} item${itemCount !== 1 ? 's' : ''}</td>
+        <td><strong>$${Number(o.totalAmount).toFixed(2)}</strong></td>
+        <td>
+          <span class="status-badge status-${o.paymentStatus}">${o.paymentStatus}</span>
+          <span style="font-size:var(--font-size-xs);color:var(--color-text-secondary);display:block">${o.paymentMethod || 'mock'}</span>
+        </td>
+        <td>
+          <span class="status-badge status-${o.orderStatus}">${o.orderStatus}</span>
+        </td>
+        <td style="font-size:var(--font-size-xs);color:var(--color-text-secondary)">${date}</td>
+        <td>
+          <div class="actions">
+            <select class="order-status-select" data-order-id="${o._id}" style="font-size:var(--font-size-xs);padding:var(--space-1) var(--space-2);border:1px solid var(--color-border);border-radius:var(--radius-sm);background:var(--color-white)">
+              ${statusOptions}
+            </select>
+            <button class="btn btn-secondary btn-sm" data-view-order="${o._id}" onclick="alert('Customer: ${(o.userId?.name || 'N/A').replace(/'/g, '\\\'')}\nAddress: ${o.shippingAddress?.street || ''}, ${o.shippingAddress?.city || ''}\nPayment: ${o.paymentMethod || 'mock'} / ${o.paymentStatus}\nTransaction: ${o.transactionId || '—'}\nTotal: $${Number(o.totalAmount).toFixed(2)}')">View</button>
+          </div>
+        </td>
+      </tr>`;
+    }).join('');
+
+    document.querySelectorAll('.order-status-select').forEach(sel => {
+      sel.addEventListener('change', async () => {
+        try {
+          await api(`/admin/orders/${sel.dataset.orderId}`, {
+            method: 'PATCH',
+            body: JSON.stringify({ orderStatus: sel.value }),
+          });
+          showToast('Order status updated', 'success');
+          loadOrders();
+        } catch (err) {
+          showToast(err.message, 'error');
+        }
+      });
+    });
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+}
+
+/* ===== Category Management ===== */
+const catForm = document.getElementById('category-form');
+const catName = document.getElementById('cat-name');
+const catSlug = document.getElementById('cat-slug');
+const catImage = document.getElementById('cat-image');
+const catSubmitBtn = document.getElementById('cat-submit-btn');
+const catCancelBtn = document.getElementById('cat-cancel-btn');
+const catFormTitle = document.getElementById('cat-form-title');
+const categoriesTbody = document.getElementById('categories-tbody');
+const categoriesEmpty = document.getElementById('categories-empty');
+let editingCategoryId = null;
+
+catName.addEventListener('input', () => {
+  if (!editingCategoryId) {
+    catSlug.value = catName.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || '';
+  }
+});
+
+function resetCatForm() {
+  catForm.reset();
+  editingCategoryId = null;
+  catFormTitle.textContent = 'Add Category';
+  catSubmitBtn.textContent = 'Add Category';
+  catCancelBtn.style.display = 'none';
+}
+
+catCancelBtn.addEventListener('click', resetCatForm);
+
+catForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  catSubmitBtn.disabled = true;
+  catSubmitBtn.textContent = 'Saving...';
+
+  try {
+    const slug = catSlug.value.trim() || catName.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'category';
+
+    const body = {
+      name: catName.value.trim(),
+      slug,
+      image: catImage.value.trim() || '',
+    };
+
+    if (editingCategoryId) {
+      await api(`/categories/${editingCategoryId}`, { method: 'PUT', body: JSON.stringify(body) });
+      showToast('Category updated!', 'success');
+    } else {
+      await api('/categories', { method: 'POST', body: JSON.stringify(body) });
+      showToast('Category created!', 'success');
+    }
+
+    resetCatForm();
+    loadCategories();
+  } catch (err) {
+    showToast(err.message, 'error');
+  } finally {
+    catSubmitBtn.disabled = false;
+    catSubmitBtn.textContent = editingCategoryId ? 'Update Category' : 'Add Category';
+  }
+});
+
+async function loadCategories() {
+  try {
+    const data = await api('/categories');
+    const categories = data.categories || data;
+
+    if (!categories.length) {
+      categoriesTbody.innerHTML = '';
+      categoriesEmpty.style.display = 'block';
+      return;
+    }
+
+    categoriesEmpty.style.display = 'none';
+
+    const productData = await api('/products');
+    const products = productData.products || productData;
+    const productCountMap = {};
+    products.forEach(p => {
+      const cid = p.category?._id || p.category;
+      if (cid) productCountMap[cid] = (productCountMap[cid] || 0) + 1;
+    });
+
+    categoriesTbody.innerHTML = categories.map(c =>
+      `<tr>
+        <td><strong>${c.name}</strong></td>
+        <td><code>${c.slug}</code></td>
+        <td>${productCountMap[c._id] || 0}</td>
+        <td>
+          <div class="actions">
+            <button class="btn btn-secondary btn-sm" data-edit-cat='${JSON.stringify(c).replace(/'/g, '&#39;').replace(/"/g, '&quot;')}'>Edit</button>
+            <button class="btn btn-danger btn-sm" data-delete-cat="${c._id}">Delete</button>
+          </div>
+        </td>
+      </tr>`
+    ).join('');
+
+    categoriesTbody.querySelectorAll('[data-edit-cat]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const c = JSON.parse(btn.dataset.editCat);
+        editingCategoryId = c._id;
+        catFormTitle.textContent = 'Edit Category';
+        catSubmitBtn.textContent = 'Update Category';
+        catCancelBtn.style.display = 'inline-flex';
+        catName.value = c.name || '';
+        catSlug.value = c.slug || '';
+        catImage.value = c.image || '';
+      });
+    });
+
+    categoriesTbody.querySelectorAll('[data-delete-cat]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        if (!confirm('Delete this category?')) return;
+        try {
+          await api(`/categories/${btn.dataset.deleteCat}`, { method: 'DELETE' });
+          showToast('Category deleted', 'success');
+          loadCategories();
         } catch (err) {
           showToast(err.message, 'error');
         }

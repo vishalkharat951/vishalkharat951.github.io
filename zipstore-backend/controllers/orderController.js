@@ -76,6 +76,17 @@ exports.getAdminOrders = async (req, res, next) => {
   }
 };
 
+exports.getMyOrders = async (req, res, next) => {
+  try {
+    const orders = await Order.find({ userId: req.user.id })
+      .populate('items.productId', 'title price images')
+      .sort('-createdAt');
+    res.json({ count: orders.length, orders });
+  } catch (err) {
+    next(err);
+  }
+};
+
 exports.updateOrderStatus = async (req, res, next) => {
   try {
     const { orderStatus, paymentStatus } = req.body;

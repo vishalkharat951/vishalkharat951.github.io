@@ -43,15 +43,24 @@ const orderSchema = new mongoose.Schema({
     zip: { type: String, required: true },
     country: { type: String, required: true },
   },
+  paymentMethod: {
+    type: String,
+    enum: ['mock', 'phonepe'],
+    default: 'mock',
+  },
+  transactionId: {
+    type: String,
+    default: '',
+  },
   paymentStatus: {
     type: String,
-    enum: ['pending', 'paid'],
+    enum: ['pending', 'paid', 'failed', 'refunded'],
     default: 'pending',
   },
   orderStatus: {
     type: String,
-    enum: ['processing', 'shipped'],
-    default: 'processing',
+    enum: ['pending', 'confirmed', 'packed', 'shipped', 'delivered', 'cancelled'],
+    default: 'pending',
   },
 }, { timestamps: true });
 
