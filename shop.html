@@ -72,14 +72,14 @@
 
       grid.innerHTML = filtered.map(p => `
         <div class="product-card">
-          <img src="${(p.images && p.images[0]) || (p.imageUrl && p.imageUrl[0] === '[' ? JSON.parse(p.imageUrl)[0] : p.imageUrl) || 'https://placehold.co/400x400?text=No+Image'}" alt="${p.title}" class="product-card-image" loading="lazy">
+          <a href="product.html?id=${p._id}"><img src="${(p.images && p.images[0]) || (p.imageUrl && p.imageUrl[0] === '[' ? JSON.parse(p.imageUrl)[0] : p.imageUrl) || 'https://placehold.co/400x400?text=No+Image'}" alt="${p.title}" class="product-card-image" loading="lazy"></a>
           <div class="product-card-body">
             <span class="product-card-category">${p.category?.name || 'General'}</span>
             <h3 class="product-card-title">${p.title}</h3>
             <p class="product-card-price">₹${Number(p.price).toFixed(2)}</p>
             <div class="product-card-footer">
               <a href="product.html?id=${p._id}" class="btn btn-secondary btn-sm">View</a>
-              <button class="btn btn-outline btn-sm" data-add-to-cart='${JSON.stringify(p)}'>Add to Cart</button>
+              <button class="btn btn-outline-dark btn-sm" data-add-to-cart='${JSON.stringify(p)}'>Add to Cart</button>
             </div>
           </div>
         </div>
