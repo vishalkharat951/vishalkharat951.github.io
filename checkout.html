@@ -152,7 +152,7 @@
         try {
           const orderRes = await fetch(`${API_BASE_URL}/orders`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
             body: JSON.stringify(orderBody),
           });
 
@@ -168,7 +168,7 @@
           if (paymentMethod === 'phonepe') {
             const ppRes = await fetch(`${API_BASE_URL}/payments/phonepe-initiate`, {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+              headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
               body: JSON.stringify({ orderId }),
             });
 
@@ -190,7 +190,7 @@
 
           const payRes = await fetch(`${API_BASE_URL}/payments/checkout-mock`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
             body: JSON.stringify({ orderId }),
           });
 

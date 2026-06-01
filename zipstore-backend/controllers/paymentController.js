@@ -74,7 +74,7 @@ exports.initiatePhonePe = async (req, res, next) => {
     const payload = {
       merchantId,
       merchantTransactionId: transactionId,
-      merchantUserId: 'MUID_' + req.user.id,
+      merchantUserId: 'MUID_' + (req.user ? req.user.id : 'guest'),
       amount: amountPaise,
       redirectUrl: `${process.env.FRONTEND_URL || 'https://vishalkharat951.github.io'}/my-orders.html`,
       redirectMode: 'POST',

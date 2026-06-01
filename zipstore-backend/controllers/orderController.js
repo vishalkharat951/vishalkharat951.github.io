@@ -41,7 +41,7 @@ exports.createOrder = async (req, res, next) => {
     });
 
     const order = await Order.create({
-      userId: req.user.id,
+      userId: req.user ? req.user.id : null,
       items: orderItems,
       totalAmount,
       shippingAddress,

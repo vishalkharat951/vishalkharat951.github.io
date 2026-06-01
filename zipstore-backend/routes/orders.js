@@ -4,10 +4,10 @@ const orderController = require('../controllers/orderController');
 const paymentController = require('../controllers/paymentController');
 const { authenticate } = require('../middleware/auth');
 
-router.post('/orders', authenticate, orderController.createOrder);
+router.post('/orders', orderController.createOrder);
 router.get('/orders/my', authenticate, orderController.getMyOrders);
-router.post('/payments/checkout-mock', authenticate, paymentController.checkoutMock);
-router.post('/payments/phonepe-initiate', authenticate, paymentController.initiatePhonePe);
+router.post('/payments/checkout-mock', paymentController.checkoutMock);
+router.post('/payments/phonepe-initiate', paymentController.initiatePhonePe);
 router.post('/payments/phonepe-callback', paymentController.phonePeCallback);
 router.get('/payments/phonepe-status/:transactionId', authenticate, paymentController.verifyPhonePeStatus);
 router.get('/admin/orders', authenticate, orderController.getAdminOrders);
