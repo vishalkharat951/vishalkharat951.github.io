@@ -93,7 +93,7 @@ async function loadDashboard() {
     ]);
     const products = pData.products || pData;
     const orders = oData.orders || oData;
-    document.getElementById('stat-revenue').textContent = `$${orders.filter(o => o.paymentStatus === 'paid').reduce((s, o) => s + (o.totalAmount || 0), 0).toFixed(2)}`;
+    document.getElementById('stat-revenue').textContent = `₹${orders.filter(o => o.paymentStatus === 'paid').reduce((s, o) => s + (o.totalAmount || 0), 0).toFixed(2)}`;
     document.getElementById('stat-orders').textContent = orders.length;
     document.getElementById('stat-products').textContent = products.length;
   } catch (err) {
@@ -300,7 +300,7 @@ async function loadInventory() {
             <strong>${p.title}</strong>
           </div>
         </td>
-        <td>$${Number(p.price).toFixed(2)}</td>
+        <td>₹${Number(p.price).toFixed(2)}</td>
         <td>${p.category?.name || '—'}</td>
         <td>${p.stock}</td>
         <td>
@@ -359,7 +359,7 @@ const ORDER_STATUSES = ['pending', 'confirmed', 'packed', 'shipped', 'delivered'
 function openOrderModal(order) {
   const itemsHtml = order.items.map(i => {
     const name = i.productId?.title || 'Unknown Product';
-    return `<tr><td>${name}</td><td>${i.quantity}</td><td>$${Number(i.price).toFixed(2)}</td><td>$${(i.price * i.quantity).toFixed(2)}</td></tr>`;
+    return `<tr><td>${name}</td><td>${i.quantity}</td><td>₹${Number(i.price).toFixed(2)}</td><td>₹${(i.price * i.quantity).toFixed(2)}</td></tr>`;
   }).join('');
 
   modalBody.innerHTML = `
@@ -372,7 +372,7 @@ function openOrderModal(order) {
       <div><strong>Payment</strong><br><span class="status-badge status-${order.paymentStatus}">${order.paymentStatus}</span> / ${order.paymentMethod || 'mock'}</div>
       <div><strong>Transaction ID</strong><br>${order.transactionId || '—'}</div>
       <div><strong>Order Status</strong><br><span class="status-badge status-${order.orderStatus}">${order.orderStatus}</span></div>
-      <div><strong>Total Amount</strong><br><strong>$${Number(order.totalAmount).toFixed(2)}</strong></div>
+      <div><strong>Total Amount</strong><br><strong>₹${Number(order.totalAmount).toFixed(2)}</strong></div>
     </div>
     <div style="margin-bottom:var(--space-4)">
       <strong>Shipping Address</strong><br>
@@ -444,12 +444,12 @@ async function loadOrders() {
       return `<tr>
         <td><code>${o._id.slice(-8)}</code></td>
         <td>
-          <strong>${o.userId?.name || '—'}</strong><br>
+          <strong>${o.shippingAddress?.name || o.userId?.name || '—'}</strong><br>
           <span style="font-size:var(--font-size-xs);color:var(--color-text-secondary)">${o.userId?.email || ''}</span>
         </td>
         <td style="font-size:var(--font-size-xs)">${itemsList}</td>
         <td style="font-size:var(--font-size-xs)">${addr}</td>
-        <td><strong>$${Number(o.totalAmount).toFixed(2)}</strong></td>
+        <td><strong>₹${Number(o.totalAmount).toFixed(2)}</strong></td>
         <td>
           <span class="status-badge status-${o.paymentStatus}">${o.paymentStatus}</span>
           <span style="font-size:var(--font-size-xs);color:var(--color-text-secondary);display:block">${o.paymentMethod || 'mock'}</span>
@@ -628,7 +628,7 @@ async function loadCategories() {
 
 /* ===== Plugins ===== */
 const PLUGINS = [
-  { id: 'discount', name: 'Discount Engine', desc: '10% off on orders over $100.' },
+  { id: 'discount', name: 'Discount Engine', desc: '10% off on orders over ₹100.' },
   { id: 'analytics', name: 'Analytics Tracker', desc: 'Tracks page views and events.' },
   { id: 'reviews', name: 'Reviews & Ratings', desc: 'Enables product reviews.' },
   { id: 'newsletter', name: 'Newsletter Signup', desc: 'Email capture popup.' },

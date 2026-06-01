@@ -94,7 +94,7 @@
               <div class="product-detail-info">
                 <span class="product-detail-category">${p.category?.name || 'General'}</span>
                 <h1>${p.title}</h1>
-                <p class="product-detail-price">$${Number(p.price).toFixed(2)}</p>
+                <p class="product-detail-price">₹${Number(p.price).toFixed(2)}</p>
                 <p class="product-detail-description">${p.description || 'No description available.'}</p>
                 <p class="product-detail-stock ${inStock ? 'in-stock' : 'out-of-stock'}">
                   ${inStock ? `In Stock (${p.stock} available)` : 'Out of Stock'}

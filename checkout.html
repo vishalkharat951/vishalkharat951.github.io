@@ -103,12 +103,12 @@
             ${items.map(item => `
               <div class="summary-row">
                 <span>${item.title} x${item.quantity}</span>
-                <span>$${(item.price * item.quantity).toFixed(2)}</span>
+                <span>₹${(item.price * item.quantity).toFixed(2)}</span>
               </div>
             `).join('')}
             <div class="summary-row total">
               <span>Total</span>
-              <span>$${total.toFixed(2)}</span>
+              <span>₹${total.toFixed(2)}</span>
             </div>
           </div>
 
@@ -124,7 +124,7 @@
             </label>
           </div>
 
-          <button type="submit" class="btn btn-secondary btn-block" id="place-order-btn">Place Order — $${total.toFixed(2)}</button>
+          <button type="submit" class="btn btn-secondary btn-block" id="place-order-btn">Place Order — ₹${total.toFixed(2)}</button>
         </form>
       `;
 
@@ -140,11 +140,6 @@
         };
 
         const token = localStorage.getItem('zipstore_token');
-        if (!token) {
-          showToast('Please log in to place an order.', 'error');
-          return;
-        }
-
         const orderBody = {
           items: items.map(i => ({ productId: i.productId, quantity: i.quantity })),
           shippingAddress,
@@ -218,7 +213,7 @@
           `;
         } catch (err) {
           btn.disabled = false;
-          btn.textContent = 'Place Order — $' + total.toFixed(2);
+          btn.textContent = 'Place Order — ₹' + total.toFixed(2);
           showToast(err.message || 'Checkout failed. Please try again.', 'error');
         }
       });
