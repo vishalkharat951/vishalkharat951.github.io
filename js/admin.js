@@ -79,9 +79,24 @@ document.querySelectorAll('.admin-sidebar-nav a').forEach(link => {
   });
 });
 
+let ordersPoll = null;
+
+function startOrdersPoll() {
+  stopOrdersPoll();
+  ordersPoll = setInterval(loadOrders, 10000);
+}
+
+function stopOrdersPoll() {
+  if (ordersPoll) {
+    clearInterval(ordersPoll);
+    ordersPoll = null;
+  }
+}
+
 function showSection(name) {
   Object.entries(sections).forEach(([key, el]) => { el.style.display = key === name ? 'block' : 'none'; });
   document.querySelectorAll('.admin-sidebar-nav a').forEach(l => l.classList.toggle('active', l.dataset.section === name));
+  if (name === 'orders') startOrdersPoll(); else stopOrdersPoll();
 }
 
 /* ===== Dashboard ===== */
