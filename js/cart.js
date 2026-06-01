@@ -85,6 +85,9 @@ const Cart = {
       el.textContent = count;
       el.style.display = count > 0 ? 'flex' : 'none';
     });
+    document.querySelectorAll('.cart-icon').forEach(el => {
+      el.classList.toggle('has-items', count > 0);
+    });
   },
 
   init() {
