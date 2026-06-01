@@ -144,7 +144,22 @@
           state: document.getElementById('state').value,
         };
 
-        const token = localStorage.getItem('zipstore_token');
+        let token = localStorage.getItem('zipstore_token');
+
+        if (!token) {
+          const guestId = 'guest_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
+          const regRes = await fetch(API_BASE_URL + '/auth/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: 'Guest', email: guestId + '@zipstore.app', password: guestId }),
+          });
+          if (regRes.ok) {
+            const regData = await regRes.json();
+            token = regData.token;
+            localStorage.setItem('zipstore_token', token);
+          }
+        }
+
         const orderBody = {
           items: items.map(i => ({ productId: i.productId, quantity: i.quantity })),
           shippingAddress,
