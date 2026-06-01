@@ -132,12 +132,22 @@ fileInput.addEventListener('change', () => {
 function handleFiles(files) {
   for (const file of files) {
     if (!file.type.startsWith('image/')) continue;
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      uploadedImages.push(e.target.result);
+    const img = new Image();
+    img.onload = () => {
+      const MAX = 800;
+      let { width, height } = img;
+      if (width > MAX || height > MAX) {
+        if (width > height) { height = Math.round(height * MAX / width); width = MAX; }
+        else { width = Math.round(width * MAX / height); height = MAX; }
+      }
+      const c = document.createElement('canvas');
+      c.width = width; c.height = height;
+      const ctx = c.getContext('2d');
+      ctx.drawImage(img, 0, 0, width, height);
+      uploadedImages.push(c.toDataURL('image/jpeg', 0.7));
       renderPreviews();
     };
-    reader.readAsDataURL(file);
+    img.src = URL.createObjectURL(file);
   }
 }
 
