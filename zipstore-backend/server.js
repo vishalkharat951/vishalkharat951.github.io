@@ -25,7 +25,7 @@ if (fs.existsSync(pluginsDir)) {
   }
 }
 
-const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'https://vishalkharat951.github.io,http://localhost:3000,http://localhost:5173').split(',');
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'https://vishalkharat951.github.io,https://zipstore.run.place,http://localhost:3000,http://localhost:5173').split(',');
 
 app.use(cors({
   origin: function (origin, callback) {
