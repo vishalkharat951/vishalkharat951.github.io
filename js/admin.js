@@ -533,6 +533,53 @@ async function loadOrders() {
 }
 
 
+async function exportOrdersToExcel() {
+  const btn = document.getElementById('exportOrdersBtn');
+  btn.disabled = true;
+  btn.textContent = 'Exporting...';
+  try {
+    const data = await api('/admin/orders');
+    const orders = data.orders || data;
+    if (!orders.length) {
+      showToast('No orders to export', '');
+      return;
+    }
+    const headers = ['Order ID','Customer','Email','Phone','Products','Total','Payment Status','Payment Method','Order Status','Transaction ID','Date','Street','City','State'];
+    const rows = orders.map(o => [
+      o._id,
+      o.shippingAddress?.name || o.userId?.name || '',
+      o.userId?.email || '',
+      o.shippingAddress?.phone || '',
+      o.items.map(i => `${i.productId?.title || 'Unknown'} x${i.quantity}`).join('; '),
+      Number(o.totalAmount).toFixed(2),
+      o.paymentStatus,
+      o.paymentMethod || '',
+      o.orderStatus,
+      o.transactionId || '',
+      new Date(o.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
+      o.shippingAddress?.street || '',
+      o.shippingAddress?.city || '',
+      o.shippingAddress?.state || '',
+    ]);
+    const csv = [headers.join(','), ...rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(','))].join('\r\n');
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `orders_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast('Orders exported!', 'success');
+  } catch (err) {
+    showToast(err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Export to Excel';
+  }
+}
+
 const catForm = document.getElementById('category-form');
 const catName = document.getElementById('cat-name');
 const catSlug = document.getElementById('cat-slug');
