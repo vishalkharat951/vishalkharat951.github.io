@@ -1,230 +1,224 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ZipStore — Admin</title>
-  <link rel="stylesheet" href="css/global.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZipStore — Admin</title>
+<link rel="preconnect" href="https://zip-backend-myp0.onrender.com" crossorigin>
+<link rel="dns-prefetch" href="https://zip-backend-myp0.onrender.com">
+<link rel="preconnect" href="https://placehold.co">
+<link rel="stylesheet" href="css/global.css">
 </head>
 <body class="admin-body">
-  <aside class="admin-sidebar" id="adminSidebar">
-    <div class="admin-sidebar-header">
-      <span class="sidebar-logo">ZipStore Admin</span>
-      <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-      </button>
-    </div>
-    <ul class="admin-sidebar-nav">
-      <li><a href="#dashboard" class="active" data-section="dashboard">
-        <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-        <span class="nav-text">Dashboard</span>
-      </a></li>
-      <li><a href="#products" data-section="products">
-        <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
-        <span class="nav-text">Products</span>
-      </a></li>
-      <li><a href="#inventory" data-section="inventory">
-        <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
-        <span class="nav-text">Inventory</span>
-      </a></li>
-      <li><a href="#orders" data-section="orders">
-        <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-        <span class="nav-text">Orders</span>
-      </a></li>
-      <li><a href="#categories" data-section="categories">
-        <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-        <span class="nav-text">Categories</span>
-      </a></li>
-      <li><a href="#plugins" data-section="plugins">
-        <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-        <span class="nav-text">Plugins</span>
-      </a></li>
-    </ul>
-    <div class="admin-sidebar-footer">
-      <a href="index.html">
-        <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><polyline points="12 19 5 12 12 5"/></svg>
-        <span class="nav-text">Back to Store</span>
-      </a>
-    </div>
-  </aside>
-
-  <main class="admin-main">
-    <div id="section-dashboard">
-      <h1>Dashboard</h1>
-      <div class="admin-cards">
-        <div class="admin-card">
-          <h3>Total Revenue</h3>
-          <p id="stat-revenue">₹0.00</p>
-        </div>
-        <div class="admin-card">
-          <h3>Orders</h3>
-          <p id="stat-orders">0</p>
-        </div>
-        <div class="admin-card">
-          <h3>Catalog Volume</h3>
-          <p id="stat-products">0</p>
-        </div>
-      </div>
-    </div>
-
-    <div id="section-products" style="display:none">
-      <h1>Add / Edit Product</h1>
-      <div class="admin-section">
-        <h2 id="form-title">New Product</h2>
-        <form class="admin-form" id="product-form">
-          <div class="form-group">
-            <label for="p-title">Product Name</label>
-            <input type="text" id="p-title" placeholder="e.g. Wireless Headphones" required>
-          </div>
-          <div class="form-group">
-            <label for="p-price">Price (₹)</label>
-            <input type="number" id="p-price" step="0.01" min="0" placeholder="29.99" required>
-          </div>
-          <div class="form-group full-width">
-            <label for="p-desc">Description</label>
-            <textarea id="p-desc" rows="4" placeholder="Describe your product..." required></textarea>
-          </div>
-          <div class="form-group">
-            <label for="p-category">Category</label>
-            <input type="text" id="p-category" placeholder="e.g. Electronics" list="cat-suggestions" required>
-            <datalist id="cat-suggestions"></datalist>
-          </div>
-          <div class="form-group">
-            <label for="p-stock">Stock</label>
-            <input type="number" id="p-stock" min="0" value="10">
-          </div>
-          <div class="form-group full-width">
-            <label>Images</label>
-            <div class="drop-zone" id="dropZone">
-              <div class="drop-zone-content">
-                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--color-text-secondary);margin-bottom:var(--space-2)"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                <p>Drop images here or click to browse</p>
-              </div>
-              <input type="file" id="fileInput" accept="image/*" multiple hidden>
-            </div>
-            <div id="image-previews" class="image-previews"></div>
-          </div>
-          <div class="form-group">
-            <label for="p-video">Video URL <span style="font-weight:400;color:var(--color-text-secondary)">(optional)</span></label>
-            <input type="url" id="p-video" placeholder="https://youtube.com/embed/...">
-          </div>
-          <div class="form-group full-width" style="display:flex;gap:var(--space-3);flex-wrap:wrap">
-            <button type="submit" class="btn btn-secondary" id="form-submit-btn">Save Product</button>
-            <button type="button" class="btn btn-outline-dark" id="form-cancel-btn" style="display:none">Cancel</button>
-          </div>
-        </form>
-      </div>
-    </div>
-
-    <div id="section-inventory" style="display:none">
-      <h1>All Products</h1>
-      <div class="admin-section">
-        <div class="admin-table-wrapper">
-          <table class="admin-table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Price</th>
-                <th>Category</th>
-                <th>Stock</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody id="inventory-tbody"></tbody>
-          </table>
-        </div>
-        <p id="inventory-empty" style="text-align:center;padding:var(--space-8);color:var(--color-text-secondary);display:none">No products yet. Add your first one!</p>
-      </div>
-    </div>
-
-    <div id="section-plugins" style="display:none">
-      <h1>Plugin Configuration</h1>
-      <div class="admin-section">
-        <p style="font-size:var(--font-size-sm);color:var(--color-text-secondary);margin-bottom:var(--space-4)">
-          Enable or disable extensions. Changes save locally.
-        </p>
-        <div id="plugin-list"></div>
-      </div>
-    </div>
-
-    <div id="section-orders" style="display:none">
-      <h1>Order Management</h1>
-      <div class="admin-section">
-        <div class="admin-table-wrapper">
-          <table class="admin-table">
-            <thead>
-              <tr>
-                <th>Order ID</th>
-                <th>Customer</th>
-                <th>Products</th>
-                <th>Address</th>
-                <th>Total</th>
-                <th>Payment</th>
-                <th>Status</th>
-                <th>Date</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody id="orders-tbody"></tbody>
-          </table>
-        </div>
-        <p id="orders-empty" style="text-align:center;padding:var(--space-8);color:var(--color-text-secondary);display:none">No orders yet.</p>
-      </div>
-    </div>
-
-    <div id="section-categories" style="display:none">
-      <h1>Category Management</h1>
-      <div class="admin-section" style="margin-bottom:var(--space-4)">
-        <h2 id="cat-form-title">Add Category</h2>
-        <form class="admin-form" id="category-form">
-          <div class="form-group">
-            <label for="cat-name">Category Name</label>
-            <input type="text" id="cat-name" placeholder="e.g. Electronics" required>
-          </div>
-          <div class="form-group">
-            <label for="cat-slug">Slug</label>
-            <input type="text" id="cat-slug" placeholder="e.g. electronics">
-          </div>
-          <div class="form-group">
-            <label for="cat-image">Image URL <span style="font-weight:400;color:var(--color-text-secondary)">(optional)</span></label>
-            <input type="url" id="cat-image" placeholder="https://example.com/cat.jpg">
-          </div>
-          <div class="form-group full-width" style="display:flex;gap:var(--space-3);flex-wrap:wrap">
-            <button type="submit" class="btn btn-secondary" id="cat-submit-btn">Add Category</button>
-            <button type="button" class="btn btn-outline-dark" id="cat-cancel-btn" style="display:none">Cancel</button>
-          </div>
-        </form>
-      </div>
-      <div class="admin-section">
-        <h2>All Categories</h2>
-        <div class="admin-table-wrapper">
-          <table class="admin-table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Slug</th>
-                <th>Products</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody id="categories-tbody"></tbody>
-          </table>
-        </div>
-        <p id="categories-empty" style="text-align:center;padding:var(--space-8);color:var(--color-text-secondary);display:none">No categories yet.</p>
-      </div>
-    </div>
-  </main>
-
-  <div class="toast" id="toast"></div>
-
-  <div class="modal-overlay" id="orderModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;">
-    <div class="modal-content" style="background:var(--color-white);border-radius:var(--radius-md);max-width:700px;width:90%;max-height:85vh;overflow-y:auto;padding:var(--space-6);position:relative;">
-      <button class="modal-close" id="modalClose" style="position:absolute;top:var(--space-3);right:var(--space-3);background:none;border:none;font-size:1.5rem;cursor:pointer;color:var(--color-text-secondary)">&times;</button>
-      <h2 style="margin-bottom:var(--space-4)">Order Details</h2>
-      <div id="modalBody"></div>
-    </div>
-  </div>
-
-  <script src="js/admin.js"></script>
+<aside class="admin-sidebar" id="adminSidebar">
+<div class="admin-sidebar-header">
+<span class="sidebar-logo">ZipStore Admin</span>
+<button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+</div>
+<ul class="admin-sidebar-nav">
+<li><a href="#dashboard" class="active" data-section="dashboard">
+<svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+<span class="nav-text">Dashboard</span>
+</a></li>
+<li><a href="#products" data-section="products">
+<svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+<span class="nav-text">Products</span>
+</a></li>
+<li><a href="#inventory" data-section="inventory">
+<svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+<span class="nav-text">Inventory</span>
+</a></li>
+<li><a href="#orders" data-section="orders">
+<svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+<span class="nav-text">Orders</span>
+</a></li>
+<li><a href="#categories" data-section="categories">
+<svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+<span class="nav-text">Categories</span>
+</a></li>
+<li><a href="#plugins" data-section="plugins">
+<svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+<span class="nav-text">Plugins</span>
+</a></li>
+</ul>
+<div class="admin-sidebar-footer">
+<a href="index.html">
+<svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><polyline points="12 19 5 12 12 5"/></svg>
+<span class="nav-text">Back to Store</span>
+</a>
+</div>
+</aside>
+<main class="admin-main">
+<div id="section-dashboard">
+<h1>Dashboard</h1>
+<div class="admin-cards">
+<div class="admin-card">
+<h3>Total Revenue</h3>
+<p id="stat-revenue">₹0.00</p>
+</div>
+<div class="admin-card">
+<h3>Orders</h3>
+<p id="stat-orders">0</p>
+</div>
+<div class="admin-card">
+<h3>Catalog Volume</h3>
+<p id="stat-products">0</p>
+</div>
+</div>
+</div>
+<div id="section-products" style="display:none">
+<h1>Add / Edit Product</h1>
+<div class="admin-section">
+<h2 id="form-title">New Product</h2>
+<form class="admin-form" id="product-form">
+<div class="form-group">
+<label for="p-title">Product Name</label>
+<input type="text" id="p-title" placeholder="e.g. Wireless Headphones" required>
+</div>
+<div class="form-group">
+<label for="p-price">Price (₹)</label>
+<input type="number" id="p-price" step="0.01" min="0" placeholder="29.99" required>
+</div>
+<div class="form-group full-width">
+<label for="p-desc">Description</label>
+<textarea id="p-desc" rows="4" placeholder="Describe your product..." required></textarea>
+</div>
+<div class="form-group">
+<label for="p-category">Category</label>
+<input type="text" id="p-category" placeholder="e.g. Electronics" list="cat-suggestions" required>
+<datalist id="cat-suggestions"></datalist>
+</div>
+<div class="form-group">
+<label for="p-stock">Stock</label>
+<input type="number" id="p-stock" min="0" value="10">
+</div>
+<div class="form-group full-width">
+<label>Images</label>
+<div class="drop-zone" id="dropZone">
+<div class="drop-zone-content">
+<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--color-text-secondary);margin-bottom:var(--space-2)"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+<p>Drop images here or click to browse</p>
+</div>
+<input type="file" id="fileInput" accept="image/*" multiple hidden>
+</div>
+<div id="image-previews" class="image-previews"></div>
+</div>
+<div class="form-group">
+<label for="p-video">Video URL <span style="font-weight:400;color:var(--color-text-secondary)">(optional)</span></label>
+<input type="url" id="p-video" placeholder="https://youtube.com/embed/...">
+</div>
+<div class="form-group full-width" style="display:flex;gap:var(--space-3);flex-wrap:wrap">
+<button type="submit" class="btn btn-secondary" id="form-submit-btn">Save Product</button>
+<button type="button" class="btn btn-outline-dark" id="form-cancel-btn" style="display:none">Cancel</button>
+</div>
+</form>
+</div>
+</div>
+<div id="section-inventory" style="display:none">
+<h1>All Products</h1>
+<div class="admin-section">
+<div class="admin-table-wrapper">
+<table class="admin-table">
+<thead>
+<tr>
+<th>Name</th>
+<th>Price</th>
+<th>Category</th>
+<th>Stock</th>
+<th>Actions</th>
+</tr>
+</thead>
+<tbody id="inventory-tbody"></tbody>
+</table>
+</div>
+<p id="inventory-empty" style="text-align:center;padding:var(--space-8);color:var(--color-text-secondary);display:none">No products yet. Add your first one!</p>
+</div>
+</div>
+<div id="section-plugins" style="display:none">
+<h1>Plugin Configuration</h1>
+<div class="admin-section">
+<p style="font-size:var(--font-size-sm);color:var(--color-text-secondary);margin-bottom:var(--space-4)">
+Enable or disable extensions. Changes save locally.
+</p>
+<div id="plugin-list"></div>
+</div>
+</div>
+<div id="section-orders" style="display:none">
+<h1>Order Management</h1>
+<div class="admin-section">
+<div class="admin-table-wrapper">
+<table class="admin-table">
+<thead>
+<tr>
+<th>Order ID</th>
+<th>Customer</th>
+<th>Products</th>
+<th>Address</th>
+<th>Total</th>
+<th>Payment</th>
+<th>Status</th>
+<th>Date</th>
+<th>Actions</th>
+</tr>
+</thead>
+<tbody id="orders-tbody"></tbody>
+</table>
+</div>
+<p id="orders-empty" style="text-align:center;padding:var(--space-8);color:var(--color-text-secondary);display:none">No orders yet.</p>
+</div>
+</div>
+<div id="section-categories" style="display:none">
+<h1>Category Management</h1>
+<div class="admin-section" style="margin-bottom:var(--space-4)">
+<h2 id="cat-form-title">Add Category</h2>
+<form class="admin-form" id="category-form">
+<div class="form-group">
+<label for="cat-name">Category Name</label>
+<input type="text" id="cat-name" placeholder="e.g. Electronics" required>
+</div>
+<div class="form-group">
+<label for="cat-slug">Slug</label>
+<input type="text" id="cat-slug" placeholder="e.g. electronics">
+</div>
+<div class="form-group">
+<label for="cat-image">Image URL <span style="font-weight:400;color:var(--color-text-secondary)">(optional)</span></label>
+<input type="url" id="cat-image" placeholder="https://example.com/cat.jpg">
+</div>
+<div class="form-group full-width" style="display:flex;gap:var(--space-3);flex-wrap:wrap">
+<button type="submit" class="btn btn-secondary" id="cat-submit-btn">Add Category</button>
+<button type="button" class="btn btn-outline-dark" id="cat-cancel-btn" style="display:none">Cancel</button>
+</div>
+</form>
+</div>
+<div class="admin-section">
+<h2>All Categories</h2>
+<div class="admin-table-wrapper">
+<table class="admin-table">
+<thead>
+<tr>
+<th>Name</th>
+<th>Slug</th>
+<th>Products</th>
+<th>Actions</th>
+</tr>
+</thead>
+<tbody id="categories-tbody"></tbody>
+</table>
+</div>
+<p id="categories-empty" style="text-align:center;padding:var(--space-8);color:var(--color-text-secondary);display:none">No categories yet.</p>
+</div>
+</div>
+</main>
+<div class="toast" id="toast"></div>
+<div class="modal-overlay" id="orderModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;">
+<div class="modal-content" style="background:var(--color-white);border-radius:var(--radius-md);max-width:700px;width:90%;max-height:85vh;overflow-y:auto;padding:var(--space-6);position:relative;">
+<button class="modal-close" id="modalClose" style="position:absolute;top:var(--space-3);right:var(--space-3);background:none;border:none;font-size:1.5rem;cursor:pointer;color:var(--color-text-secondary)">&times;</button>
+<h2 style="margin-bottom:var(--space-4)">Order Details</h2>
+<div id="modalBody"></div>
+</div>
+</div>
+<script src="js/admin.js"></script>
 </body>
 </html>

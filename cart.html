@@ -1,152 +1,137 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ZipStore — Cart</title>
-  <link rel="stylesheet" href="css/global.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZipStore — Cart</title>
+<link rel="preconnect" href="https://zip-backend-myp0.onrender.com" crossorigin>
+<link rel="dns-prefetch" href="https://zip-backend-myp0.onrender.com">
+<link rel="preconnect" href="https://placehold.co">
+<link rel="stylesheet" href="css/global.css">
 </head>
 <body>
-  <nav class="navbar">
-    <div class="container">
-      <a href="index.html" class="navbar-brand">ZipStore</a>
-      <ul class="navbar-links" id="navLinks">
-        <li><a href="index.html">Home</a></li>
-        <li><a href="shop.html">Shop</a></li>
-      </ul>
-      <div class="navbar-actions">
-        <a href="cart.html" class="cart-icon" aria-label="Shopping cart">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
-          <span class="cart-count">0</span>
-        </a>
-        <button class="nav-toggle" id="navToggle" aria-label="Menu">☰</button>
-      </div>
-    </div>
-  </nav>
-
-  <div class="container">
-    <div id="cart-view"></div>
-  </div>
-
-  <footer class="footer">
-    <div class="container">
-      <p>&copy; 2026 ZipStore. All rights reserved.</p>
-    </div>
-  </footer>
-
-  <div class="toast" id="toast"></div>
-
-  <script src="js/cart.js"></script>
-  <script>
-    const cartView = document.getElementById('cart-view');
-
-    function showToast(msg, type) {
-      const el = document.getElementById('toast');
-      el.textContent = msg;
-      el.className = 'toast ' + (type || '');
-      el.classList.add('show');
-      setTimeout(() => el.classList.remove('show'), 2500);
-    }
-
-    function renderCart() {
-      const items = Cart.get();
-      const total = Cart.getTotal();
-
-      if (items.length === 0) {
-        cartView.innerHTML = `
-          <div class="cart-empty">
-            <h2>Your cart is empty</h2>
-            <p>Looks like you haven't added anything yet.</p>
-            <a href="shop.html" class="btn btn-secondary">Continue Shopping</a>
-          </div>
-        `;
-        return;
-      }
-
-      cartView.innerHTML = `
-        <div class="cart-layout">
-          <div>
-            <h2 class="section-title" style="text-align:left">Shopping Cart (${Cart.getCount()} items)</h2>
-            <div class="cart-items">
-              ${items.map(item => `
-                <div class="cart-item" data-id="${item.productId}">
-                  <img src="${item.imageUrl || 'https://placehold.co/200x200?text=No+Image'}" alt="${item.title}" class="cart-item-image" loading="lazy">
-                  <div class="cart-item-info">
-                    <h3>${item.title}</h3>
-                    <p>₹${Number(item.price).toFixed(2)} each</p>
-                  </div>
-                  <div class="cart-item-actions">
-                    <span class="cart-item-price">₹${(item.price * item.quantity).toFixed(2)}</span>
-                    <div class="cart-item-qty">
-                      <button class="qty-dec">&minus;</button>
-                      <span>${item.quantity}</span>
-                      <button class="qty-inc">+</button>
-                    </div>
-                    <button class="btn btn-danger btn-sm remove-btn">Remove</button>
-                  </div>
-                </div>
-              `).join('')}
-            </div>
-          </div>
-          <div class="cart-summary">
-            <h2>Order Summary</h2>
-            <div class="summary-row">
-              <span>Subtotal (${Cart.getCount()} items)</span>
-              <span>₹${total.toFixed(2)}</span>
-            </div>
-            <div class="summary-row">
-              <span>Shipping</span>
-              <span>Free</span>
-            </div>
-            <div class="summary-row total">
-              <span>Total</span>
-              <span>₹${total.toFixed(2)}</span>
-            </div>
-            <a href="checkout.html" class="btn btn-secondary btn-block" style="margin-top:var(--space-4);text-align:center">Proceed to BUY</a>
-            <button class="btn btn-outline btn-block" id="clear-cart-btn" style="margin-top:var(--space-3);text-align:center;color:var(--color-error);border-color:var(--color-error)">Clear Cart</button>
-          </div>
-        </div>
-      `;
-
-      cartView.querySelectorAll('.qty-inc').forEach((btn, idx) => {
-        btn.addEventListener('click', () => {
-          const id = items[idx].productId;
-          Cart.updateQuantity(id, 1);
-          renderCart();
-        });
-      });
-
-      cartView.querySelectorAll('.qty-dec').forEach((btn, idx) => {
-        btn.addEventListener('click', () => {
-          const id = items[idx].productId;
-          Cart.updateQuantity(id, -1);
-          renderCart();
-        });
-      });
-
-      cartView.querySelectorAll('.remove-btn').forEach((btn, idx) => {
-        btn.addEventListener('click', () => {
-          const id = items[idx].productId;
-          Cart.remove(id);
-          renderCart();
-          showToast('Item removed from cart.', 'error');
-        });
-      });
-
-      document.getElementById('clear-cart-btn').addEventListener('click', () => {
-        Cart.clear();
-        renderCart();
-        showToast('Cart cleared.', 'error');
-      });
-    }
-
-    renderCart();
-    window.addEventListener('cart-updated', renderCart);
-  </script>
-  <script>
-    document.getElementById('navToggle')?.addEventListener('click', () => {
-      document.getElementById('navLinks')?.classList.toggle('open');
-    });
-  </script>
+<nav class="navbar">
+<div class="container">
+<a href="index.html" class="navbar-brand">ZipStore</a>
+<ul class="navbar-links" id="navLinks">
+<li><a href="index.html">Home</a></li>
+<li><a href="shop.html">Shop</a></li>
+</ul>
+<div class="navbar-actions">
+<a href="cart.html" class="cart-icon" aria-label="Shopping cart">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+<span class="cart-count">0</span>
+</a>
+<button class="nav-toggle" id="navToggle" aria-label="Menu">☰</button>
+</div>
+</div>
+</nav>
+<div class="container">
+<div id="cart-view"></div>
+</div>
+<footer class="footer">
+<div class="container">
+<p>&copy; 2026 ZipStore. All rights reserved.</p>
+</div>
+</footer>
+<div class="toast" id="toast"></div>
+<script src="js/cart.js"></script>
+<script>
+const cartView = document.getElementById('cart-view');
+function showToast(msg, type) {
+const el = document.getElementById('toast');
+el.textContent = msg;
+el.className = 'toast ' + (type || '');
+el.classList.add('show');
+setTimeout(() => el.classList.remove('show'), 2500);
+}
+function renderCart() {
+const items = Cart.get();
+const total = Cart.getTotal();
+if (items.length === 0) {
+cartView.innerHTML = `
+<div class="cart-empty">
+<h2>Your cart is empty</h2>
+<p>Looks like you haven't added anything yet.</p>
+<a href="shop.html" class="btn btn-secondary">Continue Shopping</a>
+</div>
+`;
+return;
+}
+cartView.innerHTML = `
+<div class="cart-layout">
+<div>
+<h2 class="section-title" style="text-align:left">Shopping Cart (${Cart.getCount()} items)</h2>
+<div class="cart-items">
+${items.map(item => `
+<div class="cart-item" data-id="${item.productId}">
+<img src="${item.imageUrl || 'https://placehold.co/200x200?text=No+Image'}" alt="${item.title}" class="cart-item-image" loading="lazy">
+<div class="cart-item-info">
+<h3>${item.title}</h3>
+<p>₹${Number(item.price).toFixed(2)} each</p>
+</div>
+<div class="cart-item-actions">
+<span class="cart-item-price">₹${(item.price * item.quantity).toFixed(2)}</span>
+<div class="cart-item-qty">
+<button class="qty-dec">&minus;</button>
+<span>${item.quantity}</span>
+<button class="qty-inc">+</button>
+</div>
+<button class="btn btn-danger btn-sm remove-btn">Remove</button>
+</div>
+</div>
+`).join('')}
+</div>
+</div>
+<div class="cart-summary">
+<h2>Order Summary</h2>
+<div class="summary-row">
+<span>Subtotal (${Cart.getCount()} items)</span>
+<span>₹${total.toFixed(2)}</span>
+</div>
+<div class="summary-row">
+<span>Shipping</span>
+<span>Free</span>
+</div>
+<div class="summary-row total">
+<span>Total</span>
+<span>₹${total.toFixed(2)}</span>
+</div>
+<a href="checkout.html" class="btn btn-secondary btn-block" style="margin-top:var(--space-4);text-align:center">Proceed to BUY</a>
+<button class="btn btn-outline btn-block" id="clear-cart-btn" style="margin-top:var(--space-3);text-align:center;color:var(--color-error);border-color:var(--color-error)">Clear Cart</button>
+</div>
+</div>
+`;
+cartView.querySelectorAll('.qty-inc').forEach((btn, idx) => {
+btn.addEventListener('click', () => {
+const id = items[idx].productId;
+Cart.updateQuantity(id, 1);
+renderCart();
+});
+});
+cartView.querySelectorAll('.qty-dec').forEach((btn, idx) => {
+btn.addEventListener('click', () => {
+const id = items[idx].productId;
+Cart.updateQuantity(id, -1);
+renderCart();
+});
+});
+cartView.querySelectorAll('.remove-btn').forEach((btn, idx) => {
+btn.addEventListener('click', () => {
+const id = items[idx].productId;
+Cart.remove(id);
+renderCart();
+showToast('Item removed from cart.', 'error');
+});
+});
+document.getElementById('clear-cart-btn').addEventListener('click', () => {
+Cart.clear();
+renderCart();
+showToast('Cart cleared.', 'error');
+});
+}
+renderCart();
+window.addEventListener('cart-updated', renderCart);
+</script>
 </body>
 </html>

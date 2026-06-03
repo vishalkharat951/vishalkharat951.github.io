@@ -1,102 +1,88 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ZipStore — Home</title>
-  <link rel="stylesheet" href="css/global.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZipStore — Home</title>
+<link rel="preconnect" href="https://zip-backend-myp0.onrender.com" crossorigin>
+<link rel="dns-prefetch" href="https://zip-backend-myp0.onrender.com">
+<link rel="preconnect" href="https://placehold.co">
+<link rel="stylesheet" href="css/global.css">
 </head>
 <body>
-  <nav class="navbar">
-    <div class="container">
-      <a href="index.html" class="navbar-brand">ZipStore</a>
-      <ul class="navbar-links" id="navLinks">
-        <li><a href="index.html" class="active">Home</a></li>
-        <li><a href="shop.html">Shop</a></li>
-      </ul>
-      <div class="navbar-actions">
-        <a href="cart.html" class="cart-icon" aria-label="Shopping cart">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
-          <span class="cart-count">0</span>
-        </a>
-        <button class="nav-toggle" id="navToggle" aria-label="Menu">☰</button>
-      </div>
-    </div>
-  </nav>
-
-  <section class="hero">
-    <div class="container">
-      <h1>Welcome to ZipStore</h1>
-      <p>Discover the latest products curated just for you. Fast shipping, great prices, and quality you can trust.</p>
-      <a href="shop.html" class="btn btn-outline">Shop Now</a>
-    </div>
-  </section>
-
-  <section class="section" id="category-sections"></section>
-
-  <footer class="footer">
-    <div class="container">
-      <p>&copy; 2026 ZipStore. All rights reserved.</p>
-    </div>
-  </footer>
-
-  <div class="toast" id="toast"></div>
-
-  <script src="js/cart.js"></script>
-  <script>
-    document.getElementById('navToggle')?.addEventListener('click', () => {
-      document.getElementById('navLinks')?.classList.toggle('open');
-    });
-  </script>
-  <script>
-    const categorySections = document.getElementById('category-sections');
-
-    function renderProductCard(p) {
-      const imgSrc = (p.images && p.images[0]) || (p.imageUrl && p.imageUrl[0] === '[' ? JSON.parse(p.imageUrl)[0] : p.imageUrl) || 'https://placehold.co/400x400?text=No+Image';
-      return `
-        <div class="product-card">
-          <a href="product.html?id=${p._id}"><img src="${imgSrc}" alt="${p.title}" class="product-card-image" loading="lazy"></a>
-          <div class="product-card-body">
-            <span class="product-card-category">${p.category?.name || 'General'}</span>
-            <h3 class="product-card-title">${p.title}</h3>
-            <p class="product-card-price">₹${Number(p.price).toFixed(2)}</p>
-            <div class="product-card-footer">
-              <a href="product.html?id=${p._id}" class="btn btn-secondary btn-sm">View</a>
-              <button class="btn btn-outline-dark btn-sm" onclick="Cart.add(${JSON.stringify(p).replace(/"/g, '&quot;')})">Add to Cart</button>
-            </div>
-          </div>
-        </div>`;
-    }
-
-    fetch(`${API_BASE_URL}/products`)
-      .then(r => r.json())
-      .then(data => {
-        const products = data.products || data;
-
-        const grouped = {};
-        products.forEach(p => {
-          const catName = p.category?.name || 'General';
-          if (!grouped[catName]) grouped[catName] = [];
-          grouped[catName].push(p);
-        });
-
-        const entries = Object.entries(grouped);
-
-        if (!entries.length) {
-          categorySections.innerHTML = '<div class="container"><p class="error-message">No products available.</p></div>';
-          return;
-        }
-
-        categorySections.innerHTML = entries.map(([catName, catProducts]) => `
-          <div class="container" style="margin-bottom:var(--space-8)">
-            <h2 class="section-title">${catName}</h2>
-            <div class="product-grid">${catProducts.map(renderProductCard).join('')}</div>
-          </div>
-        `).join('');
-      })
-      .catch(() => {
-        categorySections.innerHTML = '<div class="container"><p class="error-message">Failed to load products. Make sure the API is running.</p></div>';
-      });
-  </script>
+<nav class="navbar">
+<div class="container">
+<a href="index.html" class="navbar-brand">ZipStore</a>
+<ul class="navbar-links" id="navLinks">
+<li><a href="index.html" class="active">Home</a></li>
+<li><a href="shop.html">Shop</a></li>
+</ul>
+<div class="navbar-actions">
+<a href="cart.html" class="cart-icon" aria-label="Shopping cart">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+<span class="cart-count">0</span>
+</a>
+<button class="nav-toggle" id="navToggle" aria-label="Menu">☰</button>
+</div>
+</div>
+</nav>
+<section class="hero">
+<div class="container">
+<h1>Welcome to ZipStore</h1>
+<p>Discover the latest products curated just for you. Fast shipping, great prices, and quality you can trust.</p>
+<a href="shop.html" class="btn btn-outline">Shop Now</a>
+</div>
+</section>
+<section class="section" id="category-sections"></section>
+<footer class="footer">
+<div class="container">
+<p>&copy; 2026 ZipStore. All rights reserved.</p>
+</div>
+</footer>
+<div class="toast" id="toast"></div>
+<script src="js/cart.js"></script>
+<script>
+const categorySections = document.getElementById('category-sections');
+function renderProductCard(p) {
+const imgSrc = (p.images && p.images[0]) || (p.imageUrl && p.imageUrl[0] === '[' ? JSON.parse(p.imageUrl)[0] : p.imageUrl) || 'https://placehold.co/400x400?text=No+Image';
+return `
+<div class="product-card">
+<a href="product.html?id=${p._id}"><img src="${imgSrc}" alt="${p.title}" class="product-card-image" loading="lazy"></a>
+<div class="product-card-body">
+<span class="product-card-category">${p.category?.name || 'General'}</span>
+<h3 class="product-card-title">${p.title}</h3>
+<p class="product-card-price">₹${Number(p.price).toFixed(2)}</p>
+<div class="product-card-footer">
+<a href="product.html?id=${p._id}" class="btn btn-secondary btn-sm">View</a>
+<button class="btn btn-outline-dark btn-sm" onclick="Cart.add(${JSON.stringify(p).replace(/"/g, '&quot;')})">Add to Cart</button>
+</div>
+</div>
+</div>`;
+}
+apiGet(`${API_BASE_URL}/products`)
+.then(data => {
+const products = data.products || data;
+const grouped = {};
+products.forEach(p => {
+const catName = p.category?.name || 'General';
+if (!grouped[catName]) grouped[catName] = [];
+grouped[catName].push(p);
+});
+const entries = Object.entries(grouped);
+if (!entries.length) {
+categorySections.innerHTML = '<div class="container"><p class="error-message">No products available.</p></div>';
+return;
+}
+categorySections.innerHTML = entries.map(([catName, catProducts]) => `
+<div class="container" style="margin-bottom:var(--space-8)">
+<h2 class="section-title">${catName}</h2>
+<div class="product-grid">${catProducts.map(renderProductCard).join('')}</div>
+</div>
+`).join('');
+})
+.catch(() => {
+categorySections.innerHTML = '<div class="container"><p class="error-message">Failed to load products. Make sure the API is running.</p></div>';
+});
+</script>
 </body>
 </html>

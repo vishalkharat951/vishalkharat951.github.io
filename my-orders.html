@@ -1,186 +1,169 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ZipStore — My Orders</title>
-  <link rel="stylesheet" href="css/global.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZipStore — My Orders</title>
+<link rel="preconnect" href="https://zip-backend-myp0.onrender.com" crossorigin>
+<link rel="dns-prefetch" href="https://zip-backend-myp0.onrender.com">
+<link rel="preconnect" href="https://placehold.co">
+<link rel="stylesheet" href="css/global.css">
 </head>
 <body>
-  <nav class="navbar">
-    <div class="container">
-      <a href="index.html" class="navbar-brand">ZipStore</a>
-      <ul class="navbar-links" id="navLinks">
-        <li><a href="index.html">Home</a></li>
-        <li><a href="shop.html">Shop</a></li>
-      </ul>
-      <div class="navbar-actions">
-        <a href="cart.html" class="cart-icon" aria-label="Shopping cart">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
-          <span class="cart-count">0</span>
-        </a>
-        <button class="nav-toggle" id="navToggle" aria-label="Menu">☰</button>
-      </div>
-    </div>
-  </nav>
-
-  <div class="container" style="padding-top:var(--space-8);padding-bottom:var(--space-8)">
-    <div id="orders-view">
-      <div class="loading" id="loading">
-        <div class="spinner"></div>
-        <p>Loading orders...</p>
-      </div>
-    </div>
-  </div>
-
-  <footer class="footer">
-    <div class="container">
-      <p>&copy; 2026 ZipStore. All rights reserved.</p>
-    </div>
-  </footer>
-
-  <div class="toast" id="toast"></div>
-
-  <script src="js/cart.js"></script>
-  <script>
-    const API_BASE_URL = 'https://zip-backend-myp0.onrender.com/api';
-
-    function showToast(msg, type) {
-      const el = document.getElementById('toast');
-      el.textContent = msg;
-      el.className = 'toast ' + (type || '');
-      el.classList.add('show');
-      setTimeout(() => el.classList.remove('show'), 2500);
-    }
-
-    const ORDER_STATUSES = ['pending', 'confirmed', 'packed', 'shipped', 'delivered', 'cancelled'];
-
-    function getStatusBadge(status) {
-      return `<span class="status-badge status-${status}">${status}</span>`;
-    }
-
-    async function loadOrders() {
-      const view = document.getElementById('orders-view');
-      const loading = document.getElementById('loading');
-      const token = localStorage.getItem('zipstore_token');
-
-      if (!token) {
-        loading.style.display = 'none';
-        view.innerHTML = `
-          <div class="cart-empty">
-            <h2>Please Log In</h2>
-            <p>You need to log in to view your orders.</p>
-            <a href="login.html" class="btn btn-secondary" style="margin-top:var(--space-4)">Log In</a>
-          </div>
-        `;
-        return;
-      }
-
-      try {
-        const res = await fetch(API_BASE_URL + '/orders/my', {
-          headers: { Authorization: 'Bearer ' + token },
-        });
-
-        if (!res.ok) {
-          if (res.status === 401) {
-            localStorage.removeItem('zipstore_token');
-            window.location.href = 'login.html';
-            return;
-          }
-          throw new Error('Failed to load orders');
-        }
-
-        const data = await res.json();
-        const orders = data.orders || data;
-        loading.style.display = 'none';
-
-        const params = new URLSearchParams(window.location.search);
-        const paymentStatus = params.get('payment');
-
-        if (paymentStatus === 'success') {
-          showToast('Payment successful! Order confirmed.', 'success');
-          window.history.replaceState({}, '', 'my-orders.html');
-        }
-
-        if (!orders.length) {
-          view.innerHTML = `
-            <h1 style="margin-bottom:var(--space-6)">My Orders</h1>
-            <div class="cart-empty">
-              <h2>No orders yet</h2>
-              <p>You haven&rsquo;t placed any orders.</p>
-              <a href="shop.html" class="btn btn-secondary" style="margin-top:var(--space-4)">Start Shopping</a>
-            </div>
-          `;
-          return;
-        }
-
-        view.innerHTML = `
-          <h1 style="margin-bottom:var(--space-6)">My Orders</h1>
-          ${orders.map(o => {
-            const date = new Date(o.createdAt).toLocaleDateString('en-US', {
-              year: 'numeric', month: 'long', day: 'numeric',
-            });
-            const deliveryDate = new Date(o.createdAt);
-            deliveryDate.setDate(deliveryDate.getDate() + 4);
-            const deliveryDateStr = deliveryDate.toLocaleDateString('en-US', {
-              year: 'numeric', month: 'long', day: 'numeric',
-            });
-            return `
-              <div class="admin-section" style="margin-bottom:var(--space-4)">
-                <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:var(--space-3);margin-bottom:var(--space-4)">
-                  <div>
-                    <strong style="font-size:var(--font-size-lg)">Order #${o._id.slice(-8)}</strong>
-                    <span style="display:block;font-size:var(--font-size-xs);color:var(--color-text-secondary)">${date}</span>
-                    <span style="display:inline-block;margin-top:var(--space-1);padding:2px 10px;background:#e8f5e9;color:#2e7d32;border-radius:var(--radius-sm);font-size:var(--font-size-xs);font-weight:600">Estimated delivery: ${deliveryDateStr}</span>
-                  </div>
-                  <div style="text-align:right">
-                    <div>${getStatusBadge(o.orderStatus)}</div>
-                    <span style="font-size:var(--font-size-xs);color:var(--color-text-secondary)">Payment: ${getStatusBadge(o.paymentStatus)}</span>
-                  </div>
-                </div>
-                <div style="border-top:1px solid var(--color-border);padding-top:var(--space-3)">
-                  ${o.items.map(item => `
-                    <div style="display:flex;justify-content:space-between;align-items:center;padding:var(--space-2) 0;border-bottom:1px solid var(--color-border)">
-                      <span>${item.productId?.title || 'Product'} x${item.quantity}</span>
-                      <span>₹${(item.price * item.quantity).toFixed(2)}</span>
-                    </div>
-                  `).join('')}
-                  <div style="display:flex;justify-content:space-between;font-weight:700;padding-top:var(--space-3)">
-                    <span>Total</span>
-                    <span>₹${Number(o.totalAmount).toFixed(2)}</span>
-                  </div>
-                </div>
-                <details style="margin-top:var(--space-3);font-size:var(--font-size-sm)">
-                  <summary style="cursor:pointer;color:var(--color-text-secondary)">Shipping Details</summary>
-                  <div style="padding:var(--space-3);background:var(--color-bg);border-radius:var(--radius-md);margin-top:var(--space-2)">
-                    <p><strong>${o.shippingAddress?.name || o.userId?.name || ''}</strong> ${o.shippingAddress?.phone ? '&mdash; ' + o.shippingAddress.phone : ''}</p>
-                    <p>${o.shippingAddress?.street || ''}</p>
-                    <p>${o.shippingAddress?.city || ''}, ${o.shippingAddress?.state || ''}</p>
-                    ${o.transactionId ? `<p style="margin-top:var(--space-2);color:var(--color-text-secondary)">Transaction: ${o.transactionId}</p>` : ''}
-                  </div>
-                </details>
-              </div>
-            `;
-          }).join('')}
-        `;
-      } catch (err) {
-        loading.style.display = 'none';
-        view.innerHTML = `
-          <div class="cart-empty">
-            <h2>Something went wrong</h2>
-            <p>${err.message}</p>
-            <button class="btn btn-secondary" style="margin-top:var(--space-4)" onclick="loadOrders()">Try Again</button>
-          </div>
-        `;
-      }
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-      document.getElementById('navToggle')?.addEventListener('click', () => {
-        document.getElementById('navLinks')?.classList.toggle('open');
-      });
-      loadOrders();
-    });
-  </script>
+<nav class="navbar">
+<div class="container">
+<a href="index.html" class="navbar-brand">ZipStore</a>
+<ul class="navbar-links" id="navLinks">
+<li><a href="index.html">Home</a></li>
+<li><a href="shop.html">Shop</a></li>
+</ul>
+<div class="navbar-actions">
+<a href="cart.html" class="cart-icon" aria-label="Shopping cart">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+<span class="cart-count">0</span>
+</a>
+<button class="nav-toggle" id="navToggle" aria-label="Menu">☰</button>
+</div>
+</div>
+</nav>
+<div class="container" style="padding-top:var(--space-8);padding-bottom:var(--space-8)">
+<div id="orders-view">
+<div class="loading" id="loading">
+<div class="spinner"></div>
+<p>Loading orders...</p>
+</div>
+</div>
+</div>
+<footer class="footer">
+<div class="container">
+<p>&copy; 2026 ZipStore. All rights reserved.</p>
+</div>
+</footer>
+<div class="toast" id="toast"></div>
+<script src="js/cart.js"></script>
+<script>
+const API_BASE_URL = 'https://zip-backend-myp0.onrender.com/api';
+function showToast(msg, type) {
+const el = document.getElementById('toast');
+el.textContent = msg;
+el.className = 'toast ' + (type || '');
+el.classList.add('show');
+setTimeout(() => el.classList.remove('show'), 2500);
+}
+const ORDER_STATUSES = ['pending', 'confirmed', 'packed', 'shipped', 'delivered', 'cancelled'];
+function getStatusBadge(status) {
+return `<span class="status-badge status-${status}">${status}</span>`;
+}
+async function loadOrders() {
+const view = document.getElementById('orders-view');
+const loading = document.getElementById('loading');
+const token = localStorage.getItem('zipstore_token');
+if (!token) {
+loading.style.display = 'none';
+view.innerHTML = `
+<div class="cart-empty">
+<h2>Please Log In</h2>
+<p>You need to log in to view your orders.</p>
+<a href="login.html" class="btn btn-secondary" style="margin-top:var(--space-4)">Log In</a>
+</div>
+`;
+return;
+}
+try {
+const res = await fetch(API_BASE_URL + '/orders/my', {
+headers: { Authorization: 'Bearer ' + token },
+});
+if (!res.ok) {
+if (res.status === 401) {
+localStorage.removeItem('zipstore_token');
+window.location.href = 'login.html';
+return;
+}
+throw new Error('Failed to load orders');
+}
+const data = await res.json();
+const orders = data.orders || data;
+loading.style.display = 'none';
+const params = new URLSearchParams(window.location.search);
+const paymentStatus = params.get('payment');
+if (paymentStatus === 'success') {
+showToast('Payment successful! Order confirmed.', 'success');
+window.history.replaceState({}, '', 'my-orders.html');
+}
+if (!orders.length) {
+view.innerHTML = `
+<h1 style="margin-bottom:var(--space-6)">My Orders</h1>
+<div class="cart-empty">
+<h2>No orders yet</h2>
+<p>You haven&rsquo;t placed any orders.</p>
+<a href="shop.html" class="btn btn-secondary" style="margin-top:var(--space-4)">Start Shopping</a>
+</div>
+`;
+return;
+}
+view.innerHTML = `
+<h1 style="margin-bottom:var(--space-6)">My Orders</h1>
+${orders.map(o => {
+const date = new Date(o.createdAt).toLocaleDateString('en-US', {
+year: 'numeric', month: 'long', day: 'numeric',
+});
+const deliveryDate = new Date(o.createdAt);
+deliveryDate.setDate(deliveryDate.getDate() + 4);
+const deliveryDateStr = deliveryDate.toLocaleDateString('en-US', {
+year: 'numeric', month: 'long', day: 'numeric',
+});
+return `
+<div class="admin-section" style="margin-bottom:var(--space-4)">
+<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:var(--space-3);margin-bottom:var(--space-4)">
+<div>
+<strong style="font-size:var(--font-size-lg)">Order #${o._id.slice(-8)}</strong>
+<span style="display:block;font-size:var(--font-size-xs);color:var(--color-text-secondary)">${date}</span>
+<span style="display:inline-block;margin-top:var(--space-1);padding:2px 10px;background:#e8f5e9;color:#2e7d32;border-radius:var(--radius-sm);font-size:var(--font-size-xs);font-weight:600">Estimated delivery: ${deliveryDateStr}</span>
+</div>
+<div style="text-align:right">
+<div>${getStatusBadge(o.orderStatus)}</div>
+<span style="font-size:var(--font-size-xs);color:var(--color-text-secondary)">Payment: ${getStatusBadge(o.paymentStatus)}</span>
+</div>
+</div>
+<div style="border-top:1px solid var(--color-border);padding-top:var(--space-3)">
+${o.items.map(item => `
+<div style="display:flex;justify-content:space-between;align-items:center;padding:var(--space-2) 0;border-bottom:1px solid var(--color-border)">
+<span>${item.productId?.title || 'Product'} x${item.quantity}</span>
+<span>₹${(item.price * item.quantity).toFixed(2)}</span>
+</div>
+`).join('')}
+<div style="display:flex;justify-content:space-between;font-weight:700;padding-top:var(--space-3)">
+<span>Total</span>
+<span>₹${Number(o.totalAmount).toFixed(2)}</span>
+</div>
+</div>
+<details style="margin-top:var(--space-3);font-size:var(--font-size-sm)">
+<summary style="cursor:pointer;color:var(--color-text-secondary)">Shipping Details</summary>
+<div style="padding:var(--space-3);background:var(--color-bg);border-radius:var(--radius-md);margin-top:var(--space-2)">
+<p><strong>${o.shippingAddress?.name || o.userId?.name || ''}</strong> ${o.shippingAddress?.phone ? '&mdash; ' + o.shippingAddress.phone : ''}</p>
+<p>${o.shippingAddress?.street || ''}</p>
+<p>${o.shippingAddress?.city || ''}, ${o.shippingAddress?.state || ''}</p>
+${o.transactionId ? `<p style="margin-top:var(--space-2);color:var(--color-text-secondary)">Transaction: ${o.transactionId}</p>` : ''}
+</div>
+</details>
+</div>
+`;
+}).join('')}
+`;
+} catch (err) {
+loading.style.display = 'none';
+view.innerHTML = `
+<div class="cart-empty">
+<h2>Something went wrong</h2>
+<p>${err.message}</p>
+<button class="btn btn-secondary" style="margin-top:var(--space-4)" onclick="loadOrders()">Try Again</button>
+</div>
+`;
+}
+}
+document.addEventListener('DOMContentLoaded', () => {
+loadOrders();
+});
+</script>
 </body>
 </html>

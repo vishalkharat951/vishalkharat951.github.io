@@ -1,139 +1,119 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ZipStore — Shop</title>
-  <link rel="stylesheet" href="css/global.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZipStore — Shop</title>
+<link rel="preconnect" href="https://zip-backend-myp0.onrender.com" crossorigin>
+<link rel="dns-prefetch" href="https://zip-backend-myp0.onrender.com">
+<link rel="preconnect" href="https://placehold.co">
+<link rel="stylesheet" href="css/global.css">
 </head>
 <body>
-  <nav class="navbar">
-    <div class="container">
-      <a href="index.html" class="navbar-brand">ZipStore</a>
-      <ul class="navbar-links" id="navLinks">
-        <li><a href="index.html">Home</a></li>
-        <li><a href="shop.html" class="active">Shop</a></li>
-      </ul>
-      <div class="navbar-actions">
-        <a href="cart.html" class="cart-icon" aria-label="Shopping cart">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
-          <span class="cart-count">0</span>
-        </a>
-        <button class="nav-toggle" id="navToggle" aria-label="Menu">☰</button>
-      </div>
-    </div>
-  </nav>
-
-  <section class="section">
-    <div class="container">
-      <h2 class="section-title">All Products</h2>
-
-      <div class="filters">
-        <select id="category-filter">
-          <option value="">All Categories</option>
-        </select>
-        <input type="text" id="search-input" placeholder="Search products..." />
-      </div>
-
-      <div class="product-grid" id="product-grid"></div>
-    </div>
-  </section>
-
-  <footer class="footer">
-    <div class="container">
-      <p>&copy; 2026 ZipStore. All rights reserved.</p>
-    </div>
-  </footer>
-
-  <div class="toast" id="toast"></div>
-
-  <script src="js/cart.js"></script>
-  <script>
-    const grid = document.getElementById('product-grid');
-    const categoryFilter = document.getElementById('category-filter');
-    const searchInput = document.getElementById('search-input');
-    let allProducts = [];
-    let allCategories = [];
-
-    function renderProducts() {
-      const cat = categoryFilter.value;
-      const query = searchInput.value.toLowerCase();
-
-      const filtered = allProducts.filter(p => {
-        const matchCat = !cat || (p.category?._id === cat);
-        const matchSearch = !query || p.title.toLowerCase().includes(query);
-        return matchCat && matchSearch;
-      });
-
-      if (filtered.length === 0) {
-        grid.innerHTML = '<p class="error-message">No products match your filters.</p>';
-        return;
-      }
-
-      grid.innerHTML = filtered.map(p => `
-        <div class="product-card">
-          <a href="product.html?id=${p._id}"><img src="${(p.images && p.images[0]) || (p.imageUrl && p.imageUrl[0] === '[' ? JSON.parse(p.imageUrl)[0] : p.imageUrl) || 'https://placehold.co/400x400?text=No+Image'}" alt="${p.title}" class="product-card-image" loading="lazy"></a>
-          <div class="product-card-body">
-            <span class="product-card-category">${p.category?.name || 'General'}</span>
-            <h3 class="product-card-title">${p.title}</h3>
-            <p class="product-card-price">₹${Number(p.price).toFixed(2)}</p>
-            <div class="product-card-footer">
-              <a href="product.html?id=${p._id}" class="btn btn-secondary btn-sm">View</a>
-              <button class="btn btn-outline-dark btn-sm" data-add-to-cart='${JSON.stringify(p)}'>Add to Cart</button>
-            </div>
-          </div>
-        </div>
-      `).join('');
-
-      grid.querySelectorAll('[data-add-to-cart]').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const product = JSON.parse(btn.dataset.addToCart);
-          Cart.add(product);
-          showToast(`${product.title} added to cart!`, 'success');
-        });
-      });
-    }
-
-    function showToast(msg, type) {
-      const el = document.getElementById('toast');
-      el.textContent = msg;
-      el.className = 'toast ' + (type || '');
-      el.classList.add('show');
-      setTimeout(() => el.classList.remove('show'), 2500);
-    }
-
-    function loadCategories() {
-      return fetch(`${API_BASE_URL}/categories`)
-        .then(r => r.json())
-        .then(data => {
-          const categories = data.categories || data;
-          allCategories = categories.map(c => ({ _id: c._id, name: c.name }));
-          categoryFilter.innerHTML = '<option value="">All Categories</option>' +
-            allCategories.map(c => `<option value="${c._id}">${c.name}</option>`).join('');
-        });
-    }
-
-    function loadProducts() {
-      return fetch(`${API_BASE_URL}/products`)
-        .then(r => r.json())
-        .then(data => {
-          allProducts = data.products || data;
-        });
-    }
-
-    Promise.all([loadProducts(), loadCategories()])
-      .then(() => renderProducts())
-      .catch(() => {
-        grid.innerHTML = '<p class="error-message">Failed to load products. Make sure the API is running.</p>';
-      });
-
-    categoryFilter.addEventListener('change', renderProducts);
-    searchInput.addEventListener('input', renderProducts);
-  </script>
-  <script>
-    document.getElementById('navToggle')?.addEventListener('click', () => {
-      document.getElementById('navLinks')?.classList.toggle('open');
-    });
-  </script>
+<nav class="navbar">
+<div class="container">
+<a href="index.html" class="navbar-brand">ZipStore</a>
+<ul class="navbar-links" id="navLinks">
+<li><a href="index.html">Home</a></li>
+<li><a href="shop.html" class="active">Shop</a></li>
+</ul>
+<div class="navbar-actions">
+<a href="cart.html" class="cart-icon" aria-label="Shopping cart">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+<span class="cart-count">0</span>
+</a>
+<button class="nav-toggle" id="navToggle" aria-label="Menu">☰</button>
+</div>
+</div>
+</nav>
+<section class="section">
+<div class="container">
+<h2 class="section-title">All Products</h2>
+<div class="filters">
+<select id="category-filter">
+<option value="">All Categories</option>
+</select>
+<input type="text" id="search-input" placeholder="Search products..." />
+</div>
+<div class="product-grid" id="product-grid"></div>
+</div>
+</section>
+<footer class="footer">
+<div class="container">
+<p>&copy; 2026 ZipStore. All rights reserved.</p>
+</div>
+</footer>
+<div class="toast" id="toast"></div>
+<script src="js/cart.js"></script>
+<script>
+const grid = document.getElementById('product-grid');
+const categoryFilter = document.getElementById('category-filter');
+const searchInput = document.getElementById('search-input');
+let allProducts = [];
+let allCategories = [];
+function renderProducts() {
+const cat = categoryFilter.value;
+const query = searchInput.value.toLowerCase();
+const filtered = allProducts.filter(p => {
+const matchCat = !cat || (p.category?._id === cat);
+const matchSearch = !query || p.title.toLowerCase().includes(query);
+return matchCat && matchSearch;
+});
+if (filtered.length === 0) {
+grid.innerHTML = '<p class="error-message">No products match your filters.</p>';
+return;
+}
+grid.innerHTML = filtered.map(p => `
+<div class="product-card">
+<a href="product.html?id=${p._id}"><img src="${(p.images && p.images[0]) || (p.imageUrl && p.imageUrl[0] === '[' ? JSON.parse(p.imageUrl)[0] : p.imageUrl) || 'https://placehold.co/400x400?text=No+Image'}" alt="${p.title}" class="product-card-image" loading="lazy"></a>
+<div class="product-card-body">
+<span class="product-card-category">${p.category?.name || 'General'}</span>
+<h3 class="product-card-title">${p.title}</h3>
+<p class="product-card-price">₹${Number(p.price).toFixed(2)}</p>
+<div class="product-card-footer">
+<a href="product.html?id=${p._id}" class="btn btn-secondary btn-sm">View</a>
+<button class="btn btn-outline-dark btn-sm" data-add-to-cart='${JSON.stringify(p)}'>Add to Cart</button>
+</div>
+</div>
+</div>
+`).join('');
+grid.querySelectorAll('[data-add-to-cart]').forEach(btn => {
+btn.addEventListener('click', () => {
+const product = JSON.parse(btn.dataset.addToCart);
+Cart.add(product);
+showToast(`${product.title} added to cart!`, 'success');
+});
+});
+}
+function showToast(msg, type) {
+const el = document.getElementById('toast');
+el.textContent = msg;
+el.className = 'toast ' + (type || '');
+el.classList.add('show');
+setTimeout(() => el.classList.remove('show'), 2500);
+}
+function loadCategories() {
+return apiGet(`${API_BASE_URL}/categories`)
+.then(data => {
+const categories = data.categories || data;
+allCategories = categories.map(c => ({ _id: c._id, name: c.name }));
+categoryFilter.innerHTML = '<option value="">All Categories</option>' +
+allCategories.map(c => `<option value="${c._id}">${c.name}</option>`).join('');
+});
+}
+function loadProducts() {
+return apiGet(`${API_BASE_URL}/products`)
+.then(data => {
+allProducts = data.products || data;
+});
+}
+Promise.all([loadProducts(), loadCategories()])
+.then(() => renderProducts())
+.catch(() => {
+grid.innerHTML = '<p class="error-message">Failed to load products. Make sure the API is running.</p>';
+});
+categoryFilter.addEventListener('change', renderProducts);
+searchInput.addEventListener('input', renderProducts);
+</script>
 </body>
 </html>

@@ -1,157 +1,136 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ZipStore — Product</title>
-  <link rel="stylesheet" href="css/global.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZipStore — Product</title>
+<link rel="preconnect" href="https://zip-backend-myp0.onrender.com" crossorigin>
+<link rel="dns-prefetch" href="https://zip-backend-myp0.onrender.com">
+<link rel="preconnect" href="https://placehold.co">
+<link rel="stylesheet" href="css/global.css">
 </head>
 <body>
-  <nav class="navbar">
-    <div class="container">
-      <a href="index.html" class="navbar-brand">ZipStore</a>
-      <ul class="navbar-links" id="navLinks">
-        <li><a href="index.html">Home</a></li>
-        <li><a href="shop.html">Shop</a></li>
-      </ul>
-      <div class="navbar-actions">
-        <a href="cart.html" class="cart-icon" aria-label="Shopping cart">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
-          <span class="cart-count">0</span>
-        </a>
-        <button class="nav-toggle" id="navToggle" aria-label="Menu">☰</button>
-      </div>
-    </div>
-  </nav>
-
-  <div class="container" id="product-container">
-    <div class="loading" id="loading">
-      <div class="spinner"></div>
-      <p>Loading product...</p>
-    </div>
-  </div>
-
-  <footer class="footer">
-    <div class="container">
-      <p>&copy; 2026 ZipStore. All rights reserved.</p>
-    </div>
-  </footer>
-
-  <div class="toast" id="toast"></div>
-
-  <script src="js/cart.js"></script>
-  <script>
-    const container = document.getElementById('product-container');
-    const loading = document.getElementById('loading');
-    const params = new URLSearchParams(window.location.search);
-    const productId = params.get('id');
-
-    function showToast(msg, type) {
-      const el = document.getElementById('toast');
-      el.textContent = msg;
-      el.className = 'toast ' + (type || '');
-      el.classList.add('show');
-      setTimeout(() => el.classList.remove('show'), 2500);
-    }
-
-    if (!productId) {
-      loading.style.display = 'none';
-      container.innerHTML = '<p class="error-message">No product ID specified. <a href="shop.html">Browse shop</a>.</p>';
-    } else {
-      fetch(`${API_BASE_URL}/products/${productId}`)
-        .then(r => {
-          if (!r.ok) throw new Error('Product not found');
-          return r.json();
-        })
-        .then(p => {
-          loading.style.display = 'none';
-
-          let videoHtml = '';
-          if (p.videoUrl) {
-            const isEmbed = p.videoUrl.includes('youtube.com/embed') || p.videoUrl.includes('youtu.be');
-            const isVideoTag = !isEmbed;
-            videoHtml = `
-              <div class="video-wrapper">
-                ${isEmbed
-                  ? `<iframe src="${p.videoUrl}" allowfullscreen></iframe>`
-                  : `<video src="${p.videoUrl}" controls></video>`
-                }
-              </div>
-            `;
-          }
-
-          const inStock = p.stock > 0;
-
-          const images = (p.images && p.images.length) ? p.images : (p.imageUrl ? (p.imageUrl[0] === '[' ? JSON.parse(p.imageUrl) : [p.imageUrl]) : []);
-          const mainImage = images[0] || 'https://placehold.co/600x600?text=No+Image';
-
-          container.innerHTML = `
-            <div class="product-detail">
-              <div class="product-detail-images">
-                <img src="${mainImage}" alt="${p.title}" class="main-image" id="main-product-image">
-                ${images.length > 1 ? `
-                  <div class="product-thumbnails">
-                    ${images.map((img, i) => `<img src="${img}" alt="${p.title} ${i+1}" class="${i === 0 ? 'active' : ''}" data-index="${i}">`).join('')}
-                  </div>
-                ` : ''}
-                ${videoHtml}
-              </div>
-              <div class="product-detail-info">
-                <span class="product-detail-category">${p.category?.name || 'General'}</span>
-                <h1>${p.title}</h1>
-                <p class="product-detail-price">₹${Number(p.price).toFixed(2)}</p>
-                <p class="product-detail-description">${p.description || 'No description available.'}</p>
-                <p class="product-detail-stock ${inStock ? 'in-stock' : 'out-of-stock'}">
-                  ${inStock ? `In Stock (${p.stock} available)` : 'Out of Stock'}
-                </p>
-                <div class="quantity-selector">
-                  <button id="qty-minus">&minus;</button>
-                  <span id="qty-display">1</span>
-                  <button id="qty-plus">+</button>
-                </div>
-                <button class="btn btn-secondary btn-block" id="add-to-cart-btn" ${!inStock ? 'disabled style="opacity:0.5;cursor:not-allowed"' : ''}>
-                  ${inStock ? 'Add to Cart' : 'Unavailable'}
-                </button>
-              </div>
-            </div>
-          `;
-
-          if (images.length > 1) {
-            container.querySelectorAll('.product-thumbnails img').forEach(thumb => {
-              thumb.addEventListener('click', () => {
-                document.getElementById('main-product-image').src = thumb.src;
-                container.querySelectorAll('.product-thumbnails img').forEach(t => t.classList.remove('active'));
-                thumb.classList.add('active');
-              });
-            });
-          }
-
-          let qty = 1;
-          const qtyDisplay = document.getElementById('qty-display');
-
-          document.getElementById('qty-minus').addEventListener('click', () => {
-            if (qty > 1) { qty--; qtyDisplay.textContent = qty; }
-          });
-
-          document.getElementById('qty-plus').addEventListener('click', () => {
-            if (qty < p.stock) { qty++; qtyDisplay.textContent = qty; }
-          });
-
-          document.getElementById('add-to-cart-btn').addEventListener('click', () => {
-            Cart.add(p, qty);
-            showToast(`${p.title} (x${qty}) added to cart!`, 'success');
-          });
-        })
-        .catch(() => {
-          loading.style.display = 'none';
-          container.innerHTML = '<p class="error-message">Product not found. <a href="shop.html">Browse shop</a>.</p>';
-        });
-    }
-  </script>
-  <script>
-    document.getElementById('navToggle')?.addEventListener('click', () => {
-      document.getElementById('navLinks')?.classList.toggle('open');
-    });
-  </script>
+<nav class="navbar">
+<div class="container">
+<a href="index.html" class="navbar-brand">ZipStore</a>
+<ul class="navbar-links" id="navLinks">
+<li><a href="index.html">Home</a></li>
+<li><a href="shop.html">Shop</a></li>
+</ul>
+<div class="navbar-actions">
+<a href="cart.html" class="cart-icon" aria-label="Shopping cart">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+<span class="cart-count">0</span>
+</a>
+<button class="nav-toggle" id="navToggle" aria-label="Menu">☰</button>
+</div>
+</div>
+</nav>
+<div class="container" id="product-container">
+<div class="loading" id="loading">
+<div class="spinner"></div>
+<p>Loading product...</p>
+</div>
+</div>
+<footer class="footer">
+<div class="container">
+<p>&copy; 2026 ZipStore. All rights reserved.</p>
+</div>
+</footer>
+<div class="toast" id="toast"></div>
+<script src="js/cart.js"></script>
+<script>
+const container = document.getElementById('product-container');
+const loading = document.getElementById('loading');
+const params = new URLSearchParams(window.location.search);
+const productId = params.get('id');
+function showToast(msg, type) {
+const el = document.getElementById('toast');
+el.textContent = msg;
+el.className = 'toast ' + (type || '');
+el.classList.add('show');
+setTimeout(() => el.classList.remove('show'), 2500);
+}
+if (!productId) {
+loading.style.display = 'none';
+container.innerHTML = '<p class="error-message">No product ID specified. <a href="shop.html">Browse shop</a>.</p>';
+} else {
+apiGet(`${API_BASE_URL}/products/${productId}`)
+.then(p => {
+loading.style.display = 'none';
+let videoHtml = '';
+if (p.videoUrl) {
+const isEmbed = p.videoUrl.includes('youtube.com/embed') || p.videoUrl.includes('youtu.be');
+const isVideoTag = !isEmbed;
+videoHtml = `
+<div class="video-wrapper">
+${isEmbed
+? `<iframe src="${p.videoUrl}" allowfullscreen></iframe>`
+: `<video src="${p.videoUrl}" controls></video>`
+}
+</div>
+`;
+}
+const inStock = p.stock > 0;
+const images = (p.images && p.images.length) ? p.images : (p.imageUrl ? (p.imageUrl[0] === '[' ? JSON.parse(p.imageUrl) : [p.imageUrl]) : []);
+const mainImage = images[0] || 'https://placehold.co/600x600?text=No+Image';
+container.innerHTML = `
+<div class="product-detail">
+<div class="product-detail-images">
+<img src="${mainImage}" alt="${p.title}" class="main-image" id="main-product-image" loading="lazy" decoding="async">
+${images.length > 1 ? `
+<div class="product-thumbnails">
+${images.map((img, i) => `<img src="${img}" alt="${p.title} ${i+1}" class="${i === 0 ? 'active' : ''}" data-index="${i}" loading="lazy" decoding="async">`).join('')}
+</div>
+` : ''}
+${videoHtml}
+</div>
+<div class="product-detail-info">
+<span class="product-detail-category">${p.category?.name || 'General'}</span>
+<h1>${p.title}</h1>
+<p class="product-detail-price">₹${Number(p.price).toFixed(2)}</p>
+<p class="product-detail-description">${p.description || 'No description available.'}</p>
+<p class="product-detail-stock ${inStock ? 'in-stock' : 'out-of-stock'}">
+${inStock ? `In Stock (${p.stock} available)` : 'Out of Stock'}
+</p>
+<div class="quantity-selector">
+<button id="qty-minus">&minus;</button>
+<span id="qty-display">1</span>
+<button id="qty-plus">+</button>
+</div>
+<button class="btn btn-secondary btn-block" id="add-to-cart-btn" ${!inStock ? 'disabled style="opacity:0.5;cursor:not-allowed"' : ''}>
+${inStock ? 'Add to Cart' : 'Unavailable'}
+</button>
+</div>
+</div>
+`;
+if (images.length > 1) {
+container.querySelectorAll('.product-thumbnails img').forEach(thumb => {
+thumb.addEventListener('click', () => {
+document.getElementById('main-product-image').src = thumb.src;
+container.querySelectorAll('.product-thumbnails img').forEach(t => t.classList.remove('active'));
+thumb.classList.add('active');
+});
+});
+}
+let qty = 1;
+const qtyDisplay = document.getElementById('qty-display');
+document.getElementById('qty-minus').addEventListener('click', () => {
+if (qty > 1) { qty--; qtyDisplay.textContent = qty; }
+});
+document.getElementById('qty-plus').addEventListener('click', () => {
+if (qty < p.stock) { qty++; qtyDisplay.textContent = qty; }
+});
+document.getElementById('add-to-cart-btn').addEventListener('click', () => {
+Cart.add(p, qty);
+showToast(`${p.title} (x${qty}) added to cart!`, 'success');
+});
+})
+.catch(() => {
+loading.style.display = 'none';
+container.innerHTML = '<p class="error-message">Product not found. <a href="shop.html">Browse shop</a>.</p>';
+});
+}
+</script>
 </body>
 </html>

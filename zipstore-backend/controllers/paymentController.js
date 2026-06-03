@@ -76,7 +76,7 @@ exports.initiatePhonePe = async (req, res, next) => {
       merchantTransactionId: transactionId,
       merchantUserId: 'MUID_' + (req.user ? req.user.id : 'guest'),
       amount: amountPaise,
-      redirectUrl: `${process.env.FRONTEND_URL || 'https://zipstore.run.place'}/my-orders.html`,
+      redirectUrl: `${process.env.FRONTEND_URL || 'https://vishalkharat951.github.io'}/my-orders.html`,
       redirectMode: 'POST',
       callbackUrl,
       mobileNumber: '',
@@ -137,11 +137,11 @@ exports.phonePeCallback = async (req, res, next) => {
     if (decoded.code === 'PAYMENT_SUCCESS') {
       order.paymentStatus = 'paid';
       await order.save();
-      res.redirect(`${process.env.FRONTEND_URL || 'https://zipstore.run.place'}/my-orders.html?payment=success`);
+      res.redirect(`${process.env.FRONTEND_URL || 'https://vishalkharat951.github.io'}/my-orders.html?payment=success`);
     } else {
       order.paymentStatus = 'failed';
       await order.save();
-      res.redirect(`${process.env.FRONTEND_URL || 'https://zipstore.run.place'}/checkout.html?payment=failed`);
+      res.redirect(`${process.env.FRONTEND_URL || 'https://vishalkharat951.github.io'}/checkout.html?payment=failed`);
     }
   } catch (err) {
     next(err);

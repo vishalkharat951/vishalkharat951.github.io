@@ -1,5 +1,19 @@
 const API_BASE_URL = 'https://zip-backend-myp0.onrender.com/api';
 
+const _inflight = new Map();
+async function apiGet(url, opts) {
+  const key = url + (opts ? JSON.stringify(opts) : '');
+  if (_inflight.has(key)) return _inflight.get(key);
+  const p = fetch(url, opts).then(r => { _inflight.delete(key); if (!r.ok) throw new Error('API error'); return r.json(); }).catch(e => { _inflight.delete(key); throw e; });
+  _inflight.set(key, p);
+  return p;
+}
+
+document.addEventListener('click', e => {
+  const t = e.target.closest('#navToggle');
+  if (t) document.getElementById('navLinks')?.classList.toggle('open');
+});
+
 const Cart = {
   _key: 'zipstore_cart',
 

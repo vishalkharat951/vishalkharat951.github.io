@@ -1,250 +1,213 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ZipStore — Checkout</title>
-  <link rel="stylesheet" href="css/global.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZipStore — Checkout</title>
+<link rel="preconnect" href="https://zip-backend-myp0.onrender.com" crossorigin>
+<link rel="dns-prefetch" href="https://zip-backend-myp0.onrender.com">
+<link rel="preconnect" href="https://placehold.co">
+<link rel="stylesheet" href="css/global.css">
 </head>
 <body>
-  <nav class="navbar">
-    <div class="container">
-      <a href="index.html" class="navbar-brand">ZipStore</a>
-      <ul class="navbar-links" id="navLinks">
-        <li><a href="index.html">Home</a></li>
-        <li><a href="shop.html">Shop</a></li>
-      </ul>
-      <div class="navbar-actions">
-        <a href="cart.html" class="cart-icon" aria-label="Shopping cart">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
-          <span class="cart-count">0</span>
-        </a>
-        <button class="nav-toggle" id="navToggle" aria-label="Menu">☰</button>
-      </div>
-    </div>
-  </nav>
-
-  <div class="container">
-    <div id="checkout-view">
-      <div class="loading" id="loading">
-        <div class="spinner"></div>
-        <p>Loading checkout...</p>
-      </div>
-    </div>
-  </div>
-
-  <footer class="footer">
-    <div class="container">
-      <p>&copy; 2026 ZipStore. All rights reserved.</p>
-    </div>
-  </footer>
-
-  <div class="toast" id="toast"></div>
-
-  <script src="js/cart.js"></script>
-  <script>
-    const checkoutView = document.getElementById('checkout-view');
-    const loading = document.getElementById('loading');
-
-    function showToast(msg, type) {
-      const el = document.getElementById('toast');
-      el.textContent = msg;
-      el.className = 'toast ' + (type || '');
-      el.classList.add('show');
-      setTimeout(() => el.classList.remove('show'), 2500);
-    }
-
-    function renderCheckout() {
-      const items = Cart.get();
-      const total = Cart.getTotal();
-
-      if (items.length === 0) {
-        loading.style.display = 'none';
-        checkoutView.innerHTML = `
-          <div class="cart-empty">
-            <h2>Your cart is empty</h2>
-            <p>Add some items before checking out.</p>
-            <a href="shop.html" class="btn btn-secondary">Continue Shopping</a>
-          </div>
-        `;
-        return;
-      }
-
-      loading.style.display = 'none';
-
-      checkoutView.innerHTML = `
-        <form class="checkout-form" id="checkout-form">
-          <h2 class="section-title" style="text-align:left">Shipping Information</h2>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label for="name">Full Name</label>
-              <input type="text" id="name" required placeholder="John Doe">
-            </div>
-            <div class="form-group">
-              <label for="phone">Phone Number</label>
-              <input type="tel" id="phone" required placeholder="+1 555-123-4567">
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label for="street">Address</label>
-            <input type="text" id="street" required placeholder="123 Main St">
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label for="city">City</label>
-              <input type="text" id="city" required placeholder="New York">
-            </div>
-            <div class="form-group">
-              <label for="state">State</label>
-              <input type="text" id="state" required placeholder="NY">
-            </div>
-          </div>
-
-          <div class="cart-summary" style="position:static;margin-bottom:var(--space-6)">
-            <h2>Order Summary</h2>
-            ${items.map(item => `
-              <div class="summary-row">
-                <span>${item.title} x${item.quantity}</span>
-                <span>₹${(item.price * item.quantity).toFixed(2)}</span>
-              </div>
-            `).join('')}
-            <div class="summary-row total">
-              <span>Total</span>
-              <span>₹${total.toFixed(2)}</span>
-            </div>
-          </div>
-
-          <div style="margin-bottom:var(--space-4)">
-            <label style="display:block;font-weight:600;margin-bottom:var(--space-2)">Payment Method</label>
-            <label style="display:inline-flex;align-items:center;gap:var(--space-2);margin-right:var(--space-4);cursor:pointer">
-              <input type="radio" name="paymentMethod" value="mock" checked>
-              Mock Payment
-            </label>
-            <label style="display:inline-flex;align-items:center;gap:var(--space-2);cursor:pointer">
-              <input type="radio" name="paymentMethod" value="phonepe">
-              PhonePe
-            </label>
-          </div>
-
-          <button type="submit" class="btn btn-secondary btn-block" id="place-order-btn">Place Order — ₹${total.toFixed(2)}</button>
-        </form>
-      `;
-
-      document.getElementById('checkout-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-
-        const shippingAddress = {
-          name: document.getElementById('name').value,
-          phone: document.getElementById('phone').value,
-          street: document.getElementById('street').value,
-          city: document.getElementById('city').value,
-          state: document.getElementById('state').value,
-        };
-
-        let token = localStorage.getItem('zipstore_token');
-
-        if (!token) {
-          const guestId = 'guest_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
-          const regRes = await fetch(API_BASE_URL + '/auth/register', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name: 'Guest', email: guestId + '@zipstore.app', password: guestId }),
-          });
-          if (regRes.ok) {
-            const regData = await regRes.json();
-            token = regData.token;
-            localStorage.setItem('zipstore_token', token);
-          }
-        }
-
-        const orderBody = {
-          items: items.map(i => ({ productId: i.productId, quantity: i.quantity })),
-          shippingAddress,
-        };
-
-        const btn = document.getElementById('place-order-btn');
-        btn.disabled = true;
-        btn.textContent = 'Processing...';
-
-        try {
-          const orderRes = await fetch(`${API_BASE_URL}/orders`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-            body: JSON.stringify(orderBody),
-          });
-
-          if (!orderRes.ok) {
-            const err = await orderRes.json();
-            throw new Error(err.error || 'Failed to create order');
-          }
-
-          const order = await orderRes.json();
-          const orderId = order.order._id || order.order.id;
-          const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
-
-          if (paymentMethod === 'phonepe') {
-            const ppRes = await fetch(`${API_BASE_URL}/payments/phonepe-initiate`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-              body: JSON.stringify({ orderId }),
-            });
-
-            if (!ppRes.ok) {
-              const ppErr = await ppRes.json();
-              throw new Error(ppErr.error || 'PhonePe initiation failed');
-            }
-
-            const ppData = await ppRes.json();
-
-            if (ppData.redirectUrl) {
-              Cart.clear();
-              window.location.href = ppData.redirectUrl;
-              return;
-            }
-
-            throw new Error('No redirect URL from PhonePe');
-          }
-
-          const payRes = await fetch(`${API_BASE_URL}/payments/checkout-mock`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-            body: JSON.stringify({ orderId }),
-          });
-
-          if (!payRes.ok) {
-            throw new Error('Payment failed');
-          }
-
-          const payment = await payRes.json();
-
-          Cart.clear();
-
-          checkoutView.innerHTML = `
-            <div class="cart-empty">
-              <h2>Order Confirmed!</h2>
-              <p>Your order (ID: ${orderId}) has been placed successfully.</p>
-              <p>Payment status: <strong>${payment.order.paymentStatus}</strong></p>
-              <p style="margin-top:var(--space-4)"><a href="my-orders.html" class="btn btn-secondary">View My Orders</a></p>
-              <a href="shop.html" class="btn btn-outline-dark" style="margin-top:var(--space-3)">Continue Shopping</a>
-            </div>
-          `;
-        } catch (err) {
-          btn.disabled = false;
-          btn.textContent = 'Place Order — ₹' + total.toFixed(2);
-          showToast(err.message || 'Checkout failed. Please try again.', 'error');
-        }
-      });
-    }
-
-    renderCheckout();
-  </script>
-  <script>
-    document.getElementById('navToggle')?.addEventListener('click', () => {
-      document.getElementById('navLinks')?.classList.toggle('open');
-    });
-  </script>
+<nav class="navbar">
+<div class="container">
+<a href="index.html" class="navbar-brand">ZipStore</a>
+<ul class="navbar-links" id="navLinks">
+<li><a href="index.html">Home</a></li>
+<li><a href="shop.html">Shop</a></li>
+</ul>
+<div class="navbar-actions">
+<a href="cart.html" class="cart-icon" aria-label="Shopping cart">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+<span class="cart-count">0</span>
+</a>
+<button class="nav-toggle" id="navToggle" aria-label="Menu">☰</button>
+</div>
+</div>
+</nav>
+<div class="container">
+<div id="checkout-view">
+<div class="loading" id="loading">
+<div class="spinner"></div>
+<p>Loading checkout...</p>
+</div>
+</div>
+</div>
+<footer class="footer">
+<div class="container">
+<p>&copy; 2026 ZipStore. All rights reserved.</p>
+</div>
+</footer>
+<div class="toast" id="toast"></div>
+<script src="js/cart.js"></script>
+<script>
+const checkoutView = document.getElementById('checkout-view');
+const loading = document.getElementById('loading');
+function showToast(msg, type) {
+const el = document.getElementById('toast');
+el.textContent = msg;
+el.className = 'toast ' + (type || '');
+el.classList.add('show');
+setTimeout(() => el.classList.remove('show'), 2500);
+}
+function renderCheckout() {
+const items = Cart.get();
+const total = Cart.getTotal();
+if (items.length === 0) {
+loading.style.display = 'none';
+checkoutView.innerHTML = `
+<div class="cart-empty">
+<h2>Your cart is empty</h2>
+<p>Add some items before checking out.</p>
+<a href="shop.html" class="btn btn-secondary">Continue Shopping</a>
+</div>
+`;
+return;
+}
+loading.style.display = 'none';
+checkoutView.innerHTML = `
+<form class="checkout-form" id="checkout-form">
+<h2 class="section-title" style="text-align:left">Shipping Information</h2>
+<div class="form-row">
+<div class="form-group">
+<label for="name">Full Name</label>
+<input type="text" id="name" required placeholder="John Doe">
+</div>
+<div class="form-group">
+<label for="phone">Phone Number</label>
+<input type="tel" id="phone" required placeholder="+1 555-123-4567">
+</div>
+</div>
+<div class="form-group">
+<label for="street">Address</label>
+<input type="text" id="street" required placeholder="123 Main St">
+</div>
+<div class="form-row">
+<div class="form-group">
+<label for="city">City</label>
+<input type="text" id="city" required placeholder="New York">
+</div>
+<div class="form-group">
+<label for="state">State</label>
+<input type="text" id="state" required placeholder="NY">
+</div>
+</div>
+<div class="cart-summary" style="position:static;margin-bottom:var(--space-6)">
+<h2>Order Summary</h2>
+${items.map(item => `
+<div class="summary-row">
+<span>${item.title} x${item.quantity}</span>
+<span>₹${(item.price * item.quantity).toFixed(2)}</span>
+</div>
+`).join('')}
+<div class="summary-row total">
+<span>Total</span>
+<span>₹${total.toFixed(2)}</span>
+</div>
+</div>
+<div style="margin-bottom:var(--space-4)">
+<label style="display:block;font-weight:600;margin-bottom:var(--space-2)">Payment Method</label>
+<label style="display:inline-flex;align-items:center;gap:var(--space-2);margin-right:var(--space-4);cursor:pointer">
+<input type="radio" name="paymentMethod" value="mock" checked>
+Mock Payment
+</label>
+<label style="display:inline-flex;align-items:center;gap:var(--space-2);cursor:pointer">
+<input type="radio" name="paymentMethod" value="phonepe">
+PhonePe
+</label>
+</div>
+<button type="submit" class="btn btn-secondary btn-block" id="place-order-btn">Place Order — ₹${total.toFixed(2)}</button>
+</form>
+`;
+document.getElementById('checkout-form').addEventListener('submit', async (e) => {
+e.preventDefault();
+const shippingAddress = {
+name: document.getElementById('name').value,
+phone: document.getElementById('phone').value,
+street: document.getElementById('street').value,
+city: document.getElementById('city').value,
+state: document.getElementById('state').value,
+};
+let token = localStorage.getItem('zipstore_token');
+if (!token) {
+const guestId = 'guest_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
+const regRes = await fetch(API_BASE_URL + '/auth/register', {
+method: 'POST',
+headers: { 'Content-Type': 'application/json' },
+body: JSON.stringify({ name: 'Guest', email: guestId + '@zipstore.app', password: guestId }),
+});
+if (regRes.ok) {
+const regData = await regRes.json();
+token = regData.token;
+localStorage.setItem('zipstore_token', token);
+}
+}
+const orderBody = {
+items: items.map(i => ({ productId: i.productId, quantity: i.quantity })),
+shippingAddress,
+};
+const btn = document.getElementById('place-order-btn');
+btn.disabled = true;
+btn.textContent = 'Processing...';
+try {
+const orderRes = await fetch(`${API_BASE_URL}/orders`, {
+method: 'POST',
+headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+body: JSON.stringify(orderBody),
+});
+if (!orderRes.ok) {
+const err = await orderRes.json();
+throw new Error(err.error || 'Failed to create order');
+}
+const order = await orderRes.json();
+const orderId = order.order._id || order.order.id;
+const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
+if (paymentMethod === 'phonepe') {
+const ppRes = await fetch(`${API_BASE_URL}/payments/phonepe-initiate`, {
+method: 'POST',
+headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+body: JSON.stringify({ orderId }),
+});
+if (!ppRes.ok) {
+const ppErr = await ppRes.json();
+throw new Error(ppErr.error || 'PhonePe initiation failed');
+}
+const ppData = await ppRes.json();
+if (ppData.redirectUrl) {
+Cart.clear();
+window.location.href = ppData.redirectUrl;
+return;
+}
+throw new Error('No redirect URL from PhonePe');
+}
+const payRes = await fetch(`${API_BASE_URL}/payments/checkout-mock`, {
+method: 'POST',
+headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+body: JSON.stringify({ orderId }),
+});
+if (!payRes.ok) {
+throw new Error('Payment failed');
+}
+const payment = await payRes.json();
+Cart.clear();
+checkoutView.innerHTML = `
+<div class="cart-empty">
+<h2>Order Confirmed!</h2>
+<p>Your order (ID: ${orderId}) has been placed successfully.</p>
+<p>Payment status: <strong>${payment.order.paymentStatus}</strong></p>
+<p style="margin-top:var(--space-4)"><a href="my-orders.html" class="btn btn-secondary">View My Orders</a></p>
+<a href="shop.html" class="btn btn-outline-dark" style="margin-top:var(--space-3)">Continue Shopping</a>
+</div>
+`;
+} catch (err) {
+btn.disabled = false;
+btn.textContent = 'Place Order — ₹' + total.toFixed(2);
+showToast(err.message || 'Checkout failed. Please try again.', 'error');
+}
+});
+}
+renderCheckout();
+</script>
 </body>
 </html>

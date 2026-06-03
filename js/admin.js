@@ -1,5 +1,7 @@
 const API_BASE_URL = 'https://zip-backend-myp0.onrender.com/api';
 
+const _inflight = new Map();
+
 (function routingGuard() {
   const token = localStorage.getItem('zipstore_token');
   if (!token) {
@@ -22,26 +24,30 @@ function showToast(msg, type) {
 
 async function api(path, options = {}) {
   const token = getToken();
-  const res = await fetch(`${API_BASE_URL}${path}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...options.headers,
-    },
-  });
-  if (res.status === 401) {
-    localStorage.removeItem('zipstore_token');
-    localStorage.removeItem('zipstore_user');
-    window.location.href = 'login.html';
-    throw new Error('Session expired');
-  }
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Request failed');
-  return data;
+  const key = path + JSON.stringify(options || {});
+  if (_inflight.has(key)) return _inflight.get(key);
+  const p = (async () => {
+    const res = await fetch(`${API_BASE_URL}${path}`, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...options.headers,
+      },
+    });
+    if (res.status === 401) {
+      localStorage.removeItem('zipstore_token'); localStorage.removeItem('zipstore_user');
+      window.location.href = 'login.html'; throw new Error('Session expired');
+    }
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Request failed');
+    return data;
+  })();
+  _inflight.set(key, p);
+  try { return await p; } finally { _inflight.delete(key); }
 }
 
-/* ===== Sidebar ===== */
+
 const sidebar = document.getElementById('adminSidebar');
 const sidebarToggle = document.getElementById('sidebarToggle');
 const SIDEBAR_STORAGE_KEY = 'zipstore_sidebar_collapsed';
@@ -56,7 +62,7 @@ if (localStorage.getItem(SIDEBAR_STORAGE_KEY) === '1') {
   sidebar.classList.add('collapsed');
 }
 
-/* ===== Navigation ===== */
+
 const sections = {
   dashboard: document.getElementById('section-dashboard'),
   products: document.getElementById('section-products'),
@@ -99,7 +105,7 @@ function showSection(name) {
   if (name === 'orders') startOrdersPoll(); else stopOrdersPoll();
 }
 
-/* ===== Dashboard ===== */
+
 async function loadDashboard() {
   try {
     const [pData, oData] = await Promise.all([
@@ -116,7 +122,7 @@ async function loadDashboard() {
   }
 }
 
-/* ===== Drag & Drop Images ===== */
+
 const dropZone = document.getElementById('dropZone');
 const fileInput = document.getElementById('fileInput');
 const previews = document.getElementById('image-previews');
@@ -194,7 +200,7 @@ function getImageData() {
   return [...uploadedImages];
 }
 
-/* ===== Category Cache ===== */
+
 let categoryCache = [];
 
 async function loadCatSuggestions() {
@@ -228,7 +234,7 @@ async function resolveCategory(input) {
   }
 }
 
-/* ===== Product Form ===== */
+
 const productForm = document.getElementById('product-form');
 const formTitle = document.getElementById('form-title');
 const formSubmitBtn = document.getElementById('form-submit-btn');
@@ -286,7 +292,7 @@ productForm.addEventListener('submit', async (e) => {
   }
 });
 
-/* ===== Inventory ===== */
+
 const tbody = document.getElementById('inventory-tbody');
 const emptyRow = document.getElementById('inventory-empty');
 
@@ -373,7 +379,7 @@ async function loadInventory() {
   }
 }
 
-/* ===== Order Management ===== */
+
 const ordersTbody = document.getElementById('orders-tbody');
 const ordersEmpty = document.getElementById('orders-empty');
 const orderModal = document.getElementById('orderModal');
@@ -526,7 +532,7 @@ async function loadOrders() {
   }
 }
 
-/* ===== Category Management ===== */
+
 const catForm = document.getElementById('category-form');
 const catName = document.getElementById('cat-name');
 const catSlug = document.getElementById('cat-slug');
@@ -651,7 +657,7 @@ async function loadCategories() {
   }
 }
 
-/* ===== Plugins ===== */
+
 const PLUGINS = [
   { id: 'discount', name: 'Discount Engine', desc: '10% off on orders over ₹100.' },
   { id: 'analytics', name: 'Analytics Tracker', desc: 'Tracks page views and events.' },
@@ -680,7 +686,7 @@ function renderPlugins() {
   });
 }
 
-/* ===== Init ===== */
+
 loadDashboard();
 renderPlugins();
 loadCatSuggestions();
